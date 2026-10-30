@@ -18,8 +18,8 @@ The tool runs **locally** and is polite by design: per-domain rate limits, jitte
 `User-Agent`, checkpointing after every task, and graceful Ctrl+C. It does **not** bypass robots.txt, CAPTCHAs,
 logins or other access controls; when a source blocks access the tool records it as *restricted* and moves on.
 
-> **Status:** Reddit (Phase 1) and Stack Exchange, Hacker News, GitHub, Water Boards comment letters and forum/blog
-> pages (Phase 2) are implemented. Every platform investigated, including restricted ones, is in
+> **Status:** Reddit (Phase 1); Stack Exchange, Hacker News, GitHub, Water Boards comment letters and forum/blog
+> pages (Phase 2); and Bluesky, Lemmy, Mastodon and YouTube (Phase 3A) are implemented. Every platform investigated, including restricted ones, is in
 > [docs/SOURCE_COVERAGE.md](docs/SOURCE_COVERAGE.md).
 
 ---
@@ -74,7 +74,7 @@ wbscraper run
 | `pytest` | Run the test suite (fully mocked; never touches the network). |
 
 Useful `run` options: `--min-minutes 120`, `--max-minutes 480`, `--sources reddit_arcticshift,stackexchange,github`
-(see `wbscraper sources` for all names; default is every enabled source),
+(only these), `--enable youtube` (these *in addition* to the defaults; see `wbscraper sources` for all names),
 `--since 2020-01-01`, `--until 2025-12-31`, `--refresh` (incremental: only content newer than the last run),
 `--fresh` (archive old state and start over), `--no-dashboard` (plain status lines, good for logs).
 
@@ -120,6 +120,10 @@ data/logs/run-*.log                    <- detailed logs and errors (the terminal
   | Hacker News | stories, and the full comment tree of relevant stories | Algolia API |
   | GitHub | issues/comments in the Water Boards' own data-team repos (non-staff authors only) and global issue search | unauthenticated limits are tight; set `GITHUB_TOKEN` (`export GITHUB_TOKEN=$(gh auth token)`) to speed up |
   | waterboards.ca.gov | **public comment letters** (PDF) found from the "Documents for Public Comment" pages, split into verbatim page-anchored passages (`…pdf#page=3`) | robots.txt obeyed. Agency staff reports, response-to-comments, comment summaries, agendas and minutes are **skipped** so one summary is never counted as many independent posts; skipped, unclassified and scanned PDFs are counted in `wbscraper status` / `report` |
+  | Bluesky | public posts (searched by date window, so no login is needed) and reply threads | optional `BSKY_HANDLE` / `BSKY_APP_PASSWORD` are only a fallback |
+  | Lemmy | posts, comments and threads from configurable instances (lemmy.world, lemmy.ml, …) | instances that refuse anonymous search are skipped |
+  | Mastodon | public hashtag timelines (#waterboards, #swrcb, #stormwater …) and reply threads | `MASTODON_INSTANCE` + `MASTODON_ACCESS_TOKEN` add full-text search |
+  | YouTube | video descriptions and comments for videos matching the system names | **off by default**: needs a free `YOUTUBE_API_KEY`; `wbscraper run --enable youtube` |
   | Forums, blogs, Q&A | pages found by search engines: schema.org JSON-LD, Discourse topics, WordPress comments, article text | robots.txt obeyed; Facebook, Instagram, LinkedIn, X, TikTok, Nextdoor, YouTube pages are never fetched |
 
 * **Ctrl+C** once: finish the current task, save, export, print the summary. Press it twice to leave immediately —
@@ -171,7 +175,16 @@ wbscraper sources      # praw should now show as active
 
 Windows PowerShell: `$env:REDDIT_CLIENT_ID="..."`.
 
-Other optional keys (all only raise limits): `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`.
+Other optional keys: `GITHUB_TOKEN` and `STACKEXCHANGE_KEY` only raise rate limits; `MASTODON_*` adds search;
+`BSKY_*` is a fallback. **YouTube** needs a key and is off by default:
+
+```bash
+# 1. Google Cloud Console -> create a project -> enable "YouTube Data API v3" -> Credentials -> API key (free)
+export YOUTUBE_API_KEY=...
+wbscraper run --enable youtube      # in addition to the default sources
+```
+
+(The free quota is 10,000 units/day; `youtube.max_search_calls` in `config/sources/forums.yaml` caps searches.)
 
 ## Privacy and responsible use
 
@@ -190,7 +203,9 @@ Other optional keys (all only raise limits): `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`
 * Many recent Water Boards comment letters are released only on request by e-mail, scanned letters need OCR (not
   implemented), and compiled response documents are skipped by design.
 * Facebook groups, LinkedIn, Nextdoor and members-only professional forums are not collectible with permitted
-  methods; see [docs/SOURCE_COVERAGE.md](docs/SOURCE_COVERAGE.md). The tool never claims complete coverage of the
+  methods; see [docs/SOURCE_COVERAGE.md](docs/SOURCE_COVERAGE.md) for the legitimate (usually research-only) routes.
+  Bluesky and Mastodon post URLs necessarily contain a DID / account name, because that is how those platforms
+  address posts; no other account information is stored. The tool never claims complete coverage of the
   internet — use `wbscraper report` to see what was actually reached.
 * Expect hundreds to low thousands of relevant items, not millions: these are niche systems.
 

@@ -32,15 +32,29 @@ prohibit automated collection; deliberately not collected) · **Future** (docume
 
 ## Priority 3: Other platforms
 
+### Accessible with free, permitted public APIs (Phase 3A, implemented)
+
 | Platform | Status | Findings |
 |---|---|---|
-| Bluesky | Planned (Phase 3A) | Verified: `api.bsky.app` `searchPosts` answers 200 without login (page 1); `public.api.bsky.app` answers 403; paging reported to need an app password (optional credential). |
-| Lemmy | Planned (Phase 3A) | Public `/api/v3/search` on instances; no key. |
-| Mastodon | Planned (Phase 3A) | Hashtag timelines are public; full-text status search needs an account on an opted-in server (optional token). |
-| YouTube comments | Planned (Phase 3A, optional) | Data API v3 needs a free key (10k units/day; search = 100 units, comments = 1). |
-| Facebook / Instagram | **Restricted** | Login walls; automated collection is prohibited. Legitimate routes exist only through Meta Content Library (researcher application) or Graph API review for pages you manage. Not built. |
-| LinkedIn, Nextdoor | **Restricted** | Login-gated; terms prohibit scraping; no public search API. Not built. |
-| X / Twitter, Threads, TikTok, Yelp | **Restricted / paid** | X API is paid; Threads keyword search and TikTok Research API need app review/academic access; Yelp Fusion returns only three review excerpts. Not built. |
+| Bluesky | **Implemented**, on by default, no credentials | Verified 2026-10-29: `api.bsky.app` `searchPosts` answers anonymous requests including `since`/`until` windows; cursor paging is reported to be refused anonymously, so the adapter pages by splitting date windows instead. `getPostThread` is public. Optional `BSKY_HANDLE`/`BSKY_APP_PASSWORD` are used only as a fallback if anonymous access is refused. Post URLs contain the account's DID (opaque id), as Bluesky's own URLs do. |
+| Lemmy | **Implemented**, on by default | Verified: public `/api/v3/search` works without a key on lemmy.world; instances can restrict anonymous search (handled: counted and skipped). Instances are configurable in `config/sources/forums.yaml`. |
+| Mastodon | **Implemented**, on by default (hashtag timelines); **Optional** full-text search | Verified: `/api/v1/timelines/tag/<tag>` is public on mastodon.social. Full-text status search needs an account token on an opted-in server: set `MASTODON_INSTANCE` and `MASTODON_ACCESS_TOKEN`. Mastodon's own status URLs contain the account name. |
+| YouTube comments | **Optional**, **disabled by default** | Official Data API v3 needs a free Google Cloud key (`YOUTUBE_API_KEY`); default quota 10,000 units/day, a search costs 100 units, a comment page 1 unit. Enable with `wbscraper run --enable youtube`. Only videos whose title/description match the system names have their comments fetched. |
+
+### Restricted platforms (not collected; legitimate routes documented)
+
+Researched 2026-10-29 from vendor documentation and third-party reports (verify before applying). None of these is
+accessed by this tool, and nothing in it evades their access controls.
+
+| Platform | Why it is not collected | Legitimate access route (if you want it) |
+|---|---|---|
+| Facebook / Instagram | Login walls; terms prohibit automated collection | **Meta Content Library + API**: free, for researchers affiliated with a qualifying academic/research institution, annual re-certification, ~500,000 records per 7-day window, runs inside a secure research environment and exports are restricted ([Meta docs](https://developers.facebook.com/docs/content-library-and-api/get-access)). **Instagram Graph API hashtag search**: needs a Business/Creator account and Meta app review; reported cap of 30 unique hashtags per 7 days and only recent posts. Neither fits an unaffiliated, general-purpose collection. |
+| Threads | Keyword search is permission-gated | `threads_keyword_search` permission via Meta app review; without approval only the authenticated user's own posts are searchable ([docs](https://developers.facebook.com/documentation/threads/keyword-search)). |
+| LinkedIn | Login-gated; no public post-search API | Community Management API covers organisations you manage (reads comments on your own posts) and requires application and approval ([docs](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/)). Not usable for public discussions about the Water Boards. |
+| Nextdoor | Login-gated; official APIs are partner-gated | developer.nextdoor.com offers advertising, publishing and approved-partner content APIs (e.g. public agency feed); there is no general public read API. |
+| X / Twitter | Paid | Pay-per-use since 2026-02-06 (reported ~$0.005 per post read; recent-search window of 7 days; no free tier for new developers). Optional paid future adapter. |
+| TikTok | Research-only | Research API for independent, non-profit academic researchers with ethics approval and a project application; long review times reported ([FAQ](https://developers.tiktok.com/doc/research-api-faq)). |
+| Yelp | Not a source of full reviews | Fusion API returns only a few ~160-character excerpts per business (reported); of little value here. |
 
 ## Priority 4: Government-hosted public feedback
 
@@ -58,7 +72,7 @@ prohibit automated collection; deliberately not collected) · **Future** (docume
 | Bing Search API | Not available | Retired. |
 | Brave Search API | Future | Now a $5 monthly credit and a credit card (reported). |
 | SearXNG (self-hosted) | Future | Free; needs a local server. |
-| Wayback Machine / Common Crawl | Future | URL discovery and dead-page retrieval only; no full-text search. |
+| Wayback Machine / Common Crawl | Future | URL discovery and dead-page retrieval only; no full-text search. See [FUTURE_ENHANCEMENTS.md](FUTURE_ENHANCEMENTS.md). |
 
 ## Not implemented on purpose
 

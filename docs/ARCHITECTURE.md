@@ -18,6 +18,7 @@ src/wbscraper/
     reddit_tasks.py        fallback chains, paging, window splitting, thread expansion
     handler_base.py        ApiHandler: scheduler hooks, stats/health bookkeeping for single-provider sources
     stackexchange.py hackernews.py github.py waterboards_docs.py web_pages.py   Phase 2 handlers (+ plan())
+    bluesky.py lemmy.py mastodon.py youtube.py                                  Phase 3A handlers (YouTube off by default)
     registry.py            list of extra sources (name, role, credentials, module) used by app/CLI
 tests/                     mocked network only (sockets are blocked by a fixture)
 ```
@@ -91,6 +92,18 @@ tuned with `wbscraper rescore`).
 * **Web pages.** Search-engine results go through `queue_discovered_url`, which skips login-walled domains and routes
   waterboards.ca.gov URLs to the document crawler. `web_page` tasks check robots.txt, then try JSON-LD, Discourse
   topic JSON, the WordPress comments API and finally the main article text. Authors are never read.
+
+## Lightweight platforms (Phase 3A)
+
+* **Bluesky** pages by *date window*, not cursor: `searchPosts` answers anonymous requests with `since`/`until`, and a
+  window that returns a full page of 100 is halved (down to one day). Optional app-password login is only a fallback.
+* **Lemmy / Mastodon** use keyless public endpoints per configured instance (each instance is its own rate-limited
+  domain); refused instances are counted and skipped. Mastodon hashtag paging stops after three consecutive pages
+  without any entity hit.
+* **YouTube** is excluded unless `YOUTUBE_API_KEY` is set *and* the source is enabled; searches are capped by quota
+  budget and comments are fetched only for videos whose title/description already match the system names.
+* Optional/credential sources follow one rule: keyless modes are on by default, credential-only sources are off by
+  default and enabled with `--enable <name>` or `sources.<name>.enabled: true`.
 
 ## Adding a source
 
