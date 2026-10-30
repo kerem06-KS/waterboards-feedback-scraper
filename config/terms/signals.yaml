@@ -78,24 +78,16 @@ usability:
   - uploading
   - drop-down
   - dropdown
-  - drop down
-  - menu
-  - button
-  - toggle
   - pop-up
   - popup
   - search box
-  - filter
-  - layers
   - captcha
   - 2fa
   - two-factor
   - verification code
   - browser
   - internet explorer
-  - chrome
   - firefox
-  - safari
   - timeout
   - timed out
   - timing out
@@ -107,8 +99,6 @@ usability:
   - website down
   - site is down
   - system is down
-  - is down
-  - outage
   - under maintenance
   - down for maintenance
   - help desk
@@ -123,6 +113,21 @@ usability:
   - on my phone
   - pdf only
   - fillable pdf
+
+# Interface words that are also ordinary words (a water filter, a fridge button, a power outage). They count as A next to a
+# Water Boards connection, but never carry the thread exception on their own: a reply with no connection of its own
+# needs unambiguous digital vocabulary.
+usability_ambiguous:
+  - filter
+  - layers
+  - menu
+  - button
+  - toggle
+  - drop down
+  - chrome
+  - safari
+  - is down
+  - outage
 
 process:
   - submit

@@ -58,10 +58,22 @@ groups:
     - "ms4"
   geotracker_ctx:
     - ust
-    - lust
+    # "lust" alone is an ordinary word: LUST (leaking underground storage tank) needs a site or case next to it
+    - "lust site"
+    - "lust sites"
+    - "lust case"
+    - "lust cases"
     - "underground storage"
-    - cleanup
-    - "clean-up"
+    # bare "cleanup" is generic ("UI cleanup" in a commit message): it must name a site, case or programme
+    - "site cleanup"
+    - "site clean-up"
+    - "cleanup site"
+    - "cleanup sites"
+    - "cleanup case"
+    - "cleanup cases"
+    - "cleanup program"
+    - "cleanup fund"
+    - "contaminated site"
     - groundwater
     - "ground water"
     - remediation

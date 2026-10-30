@@ -360,7 +360,8 @@ entities:
       - mywaterquality.ca.gov
       - My Water Quality portal
     weak:
-      - { term: My Water Quality, context: ["california", "@water_reg"] }
+      # a proper noun: "my water quality" is ordinary English, and "water quality" must not satisfy its own context
+      - { term: My Water Quality, case_sensitive: true, context: ["california", "water board", "water boards", "waterboards"] }
     domains: [mywaterquality.ca.gov]
     anchors:
       1: [mywaterquality.ca.gov, My Water Quality California]

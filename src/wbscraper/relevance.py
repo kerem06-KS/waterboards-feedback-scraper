@@ -83,6 +83,7 @@ class RelevanceScorer:
         rel = lib.relevance or {}
         self.w = {**DEFAULT_WEIGHTS, **(rel.get("weights") or {})}
         self._usability = lib.regexes.get("usability")
+        self._usability_ambiguous = lib.regexes.get("usability_ambiguous")
         self._process = lib.regexes.get("process")
         self._experience = lib.regexes.get("experience")
         self._experience_weak = lib.regexes.get("experience_weak")
@@ -138,8 +139,9 @@ class RelevanceScorer:
 
     # -- Stage 2 ---------------------------------------------------------------------------------------------
     @staticmethod
-    def _tier(conn: str, a: int, b: int, c: int, cs: int, thread_relevant: bool) -> tuple[str, bool]:
-        """(tier, used_thread_exception). c = all experience wording, cs = the strong kind only."""
+    def _tier(conn: str, a: int, b: int, c: int, cs: int, thread_relevant: bool, a_firm: int | None = None) -> tuple[str, bool]:
+        """(tier, used_thread_exception). c = all experience wording, cs = the strong kind only. a_firm = interface
+        words that are not also ordinary words (filter, button, outage ...); only those carry the thread exception."""
         strong_use = a >= 1 and (b >= 1 or c >= 1 or a >= 2)
         if conn == "system":
             return ("relevant" if ((c >= 1 and (a >= 1 or b >= 1)) or a >= 2) else
@@ -150,6 +152,7 @@ class RelevanceScorer:
             return ("relevant" if (a >= 1 and cs >= 1) else
                     "borderline" if (a or (b and c)) else "irrelevant"), False
         if thread_relevant:
+            a = a if a_firm is None else a_firm
             tier = "relevant" if ((a >= 1 and cs >= 1) or (a >= 1 and b >= 2) or a >= 2) else \
                    ("borderline" if (a or (b and c)) else "irrelevant")
             return tier, tier != "irrelevant"
@@ -191,7 +194,8 @@ class RelevanceScorer:
                 cs = len(sc)
                 sc = sc | self._distinct(self._experience_weak, usage)
                 a, b, c = len(sa), len(sb), len(sc)
-                tier, exc = self._tier(conn, a, b, c, cs, thread_relevant)
+                a_firm = len(sa - self._distinct(self._usability_ambiguous, usage))
+                tier, exc = self._tier(conn, a, b, c, cs, thread_relevant, a_firm)
                 key = (TIERS.index(tier), _RANK[conn], a + b + c)
                 if key > (TIERS.index(best[0]), _RANK[best[1]], best[3] + best[4] + best[5]):
                     best = (tier, conn, pts, a, b, c, exc, (sa, sb, sc))

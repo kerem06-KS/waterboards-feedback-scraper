@@ -174,7 +174,7 @@ def cmd_rescore(args) -> int:
     app = build_app(settings)
     try:
         retired = list((app.lib.relevance or {}).get("retired_queries") or [])
-        res = rescore_all(app.db, app.scorer, retired_queries=retired)
+        res = rescore_all(app.db, app.scorer, retired_queries=retired, prune=not args.keep_pending)
         console.print(res)
         exp = _do_export(app)
         console.print(f"Regenerated {exp.path} ({exp.rows} relevant rows); borderline items for review are in "
@@ -313,7 +313,11 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--include-borderline", action="store_true", help="also export borderline items")
     e.add_argument("--excel", action="store_true", help="UTF-8 with BOM so Excel opens it correctly")
     e.set_defaults(func=cmd_export)
-    sub.add_parser("rescore", parents=[common], help="re-apply relevance rules to stored items").set_defaults(func=cmd_rescore)
+    rc = sub.add_parser("rescore", parents=[common], help="re-apply relevance rules to stored items")
+    rc.add_argument("--keep-pending", action="store_true",
+                    help="only reclassify items; do not cancel any pending task (default also cancels pending work "
+                         "that existed only because of items that are no longer relevant)")
+    rc.set_defaults(func=cmd_rescore)
     sub.add_parser("sources", parents=[common], help="list source adapters").set_defaults(func=cmd_sources)
     t = sub.add_parser("terms", parents=[common], help="preview the generated search queries (offline)")
     t.add_argument("--sample", type=int, default=8, help="queries to show per family")

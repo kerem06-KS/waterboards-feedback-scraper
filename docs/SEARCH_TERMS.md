@@ -37,4 +37,9 @@ planned query to a file with `wbscraper terms --dump plan.tsv`.
   wording; `eSMR` only in that exact case with water-quality wording. A regression test fails if an ambiguous
   acronym (`WDID eSMR SMARTS OCIS ELAP GAMA FAAST UPWARD DDW DWQ DFA eAR`) is ever sent as a bare global query.
   `retired_queries` in `config/relevance.yaml` lists queries whose pending searches `wbscraper rescore` cancels.
+* **A weak term's context must not be part of the term.** `My Water Quality` used the context "water quality", so
+  "if my water quality is that bad" in a refrigerator-filter thread counted as a portal mention, flagged the thread, and
+  its 35 other comments followed through the thread exception. The term is now a case-sensitive proper noun that needs
+  California or Water Boards wording, and a regression test fails for any weak term whose context is contained in the
+  term itself.
 * **Date ranges.** All history by default (`date_range.since: 2005-06-01`); override with `--since/--until`.

@@ -157,7 +157,10 @@ An item reaches the CSV only if **both** stages pass on its own text:
    text is ignored.
 
 A reply inside a thread that is *already* established as relevant needs no connection of its own, but must itself
-talk about the interface ("the upload kept timing out for me too"). "Thanks, that worked!" does not qualify.
+talk about the interface ("the upload kept timing out for me too"). "Thanks, that worked!" does not qualify. Interface
+words that are also ordinary words (filter, button, menu, layers, drop down, outage, Chrome ...; group
+`usability_ambiguous` in `signals.yaml`) count next to a Water Boards connection but never carry this exception, so a
+thread about refrigerator water filters cannot qualify on "the filter fails".
 Context that is only implied (a link to the site, a Water Boards GitHub repository) can never make an item
 relevant by itself.
 

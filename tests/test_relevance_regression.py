@@ -357,3 +357,120 @@ def test_export_after_rescore_has_only_relevant_rows_and_review_file_has_borderl
     assert export_review_csv(app.db, review) == 1
     rrows = list(csv.reader(review.open(encoding="utf-8")))
     assert rrows[0] == REVIEW_HEADER and "GeoTracker" in rrows[1][0] and "stage1:system" in rrows[1][3]
+
+
+# ------------------------------------------------------------------------------- appliance (water filter) thread
+# A Reddit thread about refrigerator water filters was flagged relevant because one comment said "my water quality"
+# (matching the portal name "My Water Quality", whose context "water quality" was satisfied by the phrase itself).
+# Every other comment then qualified through the thread exception on "filter", "drop down" and similar words.
+APPLIANCE = json.loads((Path(__file__).parent / "fixtures" / "appliance_thread.json").read_text(encoding="utf-8"))
+
+
+def test_appliance_fixture_has_the_seed_and_its_followers():
+    assert len(APPLIANCE) >= 30 and sum(c["seed"] for c in APPLIANCE) == 1
+
+
+def test_my_water_quality_in_ordinary_english_is_not_a_portal_mention(scorer):
+    seed = next(c for c in APPLIANCE if c["seed"])["text"]
+    s = scorer.score(seed)
+    assert s.tier == "irrelevant" and s.connection == "none" and not s.entity_hit
+    assert not scorer.score("If my water quality is that bad I would have noticed it in the tap by now.").entity_hit
+
+
+@pytest.mark.parametrize("case", [c for c in APPLIANCE if not c["seed"]], ids=lambda c: c["text"][:24])
+def test_appliance_comments_are_never_relevant_even_when_their_thread_is_flagged(scorer, case):
+    assert scorer.score(case["text"]).tier == "irrelevant"
+    assert scorer.score(case["text"], thread_relevant=True).tier != "relevant"      # worst case: thread wrongly flagged
+
+
+@pytest.mark.parametrize("text", [
+    "The California My Water Quality site is confusing and I can't find my water system on the map.",
+    "My Water Quality from the State Water Board has a clunky search page, the website is hard to use.",
+])
+def test_the_real_portal_is_still_recognised(scorer, text):
+    s = scorer.score(text)
+    assert s.connection == "system" and s.tier in ("relevant", "borderline")
+    assert scorer.score(text).entity_hit
+
+
+def test_ambiguous_interface_words_still_count_next_to_a_water_boards_system(scorer):
+    text = ("Specifically go to the map in GeoTracker, open up the list of layers under the dropdown menu, go to "
+            "filterable map coverages > site cleanup and turn on the superfund layer.")
+    assert scorer.score(text).tier == "relevant"
+    assert scorer.score("GeoTracker for the UST cleanup site: where is the filter button? I can't find it on the site.").tier != "irrelevant"
+
+
+def test_ambiguous_interface_words_alone_do_not_carry_the_thread_exception(scorer):
+    for text in ("The filter keeps failing and the button is stuck, so annoying.",
+                 "Pressed the menu button and the screen stays frozen, it just fails every time.",
+                 "Power outage again, the drop down shelf fails and I'm confused."):
+        assert scorer.score(text, thread_relevant=True).tier != "relevant", text
+    # unambiguous digital wording still lets a reply in a relevant thread through
+    assert scorer.score("The upload kept failing for me too, the website is so confusing.",
+                        thread_relevant=True).tier == "relevant"
+    assert scorer.score("Same here, I can't log in on the portal either.", thread_relevant=True).tier == "relevant"
+
+
+def test_no_weak_term_is_satisfied_by_its_own_text(lib):
+    """The My Water Quality bug class: a weak term whose required context is contained in the term itself."""
+    allowed = {("swrcb", "water boards"),                    # the plural is the collective California name
+               ("stormwater_topic", "SWPPP"), ("stormwater_topic", "QSD"), ("stormwater_topic", "QSP")}   # topics: own context
+    offenders = [(e.id, w.term) for e in lib.entities for w in e.weak
+                 if w.context_regex is not None and w.context_regex.search(w.term) and (e.id, w.term) not in allowed]
+    assert offenders == []
+
+
+def test_rescore_unflags_the_appliance_thread_and_keeps_water_boards_feedback(tmp_path):
+    app, _ = make_app(tmp_path)
+    scorer = RelevanceScorer(app.lib)
+    thread = "reddit:t3_appl"
+    for i, c in enumerate(APPLIANCE):
+        app.db.insert_item(uid=f"reddit:t1_a{i}", source="reddit", kind="comment", url=f"https://reddit.com/a{i}",
+                           thread_uid=thread, parent_uid=None, community="Appliances", text=c["text"], date="2023-06-01T00:00:00Z",
+                           tier="relevant", own_relevant=1 if c["seed"] else 0, score=5.0, entity_hit=1, reasons="[]",
+                           text_hash=f"h{i}", flags="")
+    good = "The SMARTS stormwater website is so confusing, the upload kept failing when I submitted my annual report."
+    app.db.insert_item(uid="reddit:t1_good", source="reddit", kind="comment", url="https://reddit.com/good",
+                       thread_uid="reddit:t3_good", parent_uid=None, community="stormwater", text=good,
+                       date="2023-06-01T00:00:00Z", tier="relevant", own_relevant=1, score=5.0, entity_hit=1,
+                       reasons="[]", text_hash="hg", flags="")
+    app.db.commit()
+    rescore_all(app.db, scorer, prune=False)
+    tiers = {r["uid"]: r["tier"] for r in app.db.conn.execute("SELECT uid, tier FROM items")}
+    assert app.db.conn.execute("SELECT COUNT(*) FROM items").fetchone()[0] == len(APPLIANCE) + 1       # nothing deleted
+    assert tiers["reddit:t1_good"] == "relevant"
+    assert not [u for u, t in tiers.items() if t == "relevant" and u != "reddit:t1_good"]
+    assert not app.db.thread_relevant(thread)
+
+
+# --------------------------------------------------------------- GeoTracker look-alikes found while reviewing survivors
+def test_geotracker_context_needs_more_than_the_ordinary_words_lust_and_cleanup(scorer):
+    partner = ('"IF" she is willing to give you a chance... Give her access to all of your passwords, be honest to any '
+               'questions she asks, and enable any geotracker on your phones or vehicles. But you will need to figure '
+               'out why you cheated out of "pure lust" and why you wouldn\'t act on the same feelings again.')
+    code = ('Refactor GeoTracker architecture and Thymeleaf dashboard. Add DB-backed authentication, login and upload '
+            'handling; error handling for failed uploads; UI cleanup. Prompt used: chatgpt')
+    assert scorer.score(partner).tier == "irrelevant" and scorer.score(code).tier == "irrelevant"
+    assert scorer.score(partner, thread_relevant=True).tier != "relevant"
+
+
+@pytest.mark.parametrize("text", [
+    "Our LUST site is on GeoTracker and the EDF upload keeps failing, the website is so confusing.",
+    "GeoTracker site cleanup case: the portal upload was rejected and I can't figure out why, very confusing.",
+])
+def test_geotracker_with_real_site_context_is_still_relevant(scorer, text):
+    assert scorer.score(text).tier == "relevant"
+
+
+def test_rescore_cli_keep_pending_leaves_every_pending_task_alone(tmp_path, monkeypatch):
+    from wbscraper import cli
+    app, _ = make_app(tmp_path)
+    app.db.add_task("reddit_thread", {"post_id": "zzz", "after": 1, "before": 2}, 700, "reddit_thread")   # thread not relevant
+    app.db.commit()
+    before = app.db.task_counts()
+    res = rescore_all(app.db, RelevanceScorer(app.lib), prune=False)
+    assert "pruned" not in res and app.db.task_counts() == before
+    pruned = rescore_all(app.db, RelevanceScorer(app.lib), prune=True)
+    assert pruned["pruned"]["thread_reads"] == 1                       # the default still cleans up
+    args = cli.build_parser().parse_args(["rescore", "--keep-pending"]) if hasattr(cli, "build_parser") else None
+    assert args is None or args.keep_pending is True
