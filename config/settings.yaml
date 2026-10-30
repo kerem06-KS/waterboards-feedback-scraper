@@ -1,0 +1,85 @@
+# Runtime settings. Everything here can be overridden on the command line where noted.
+runtime:
+  min_minutes: 120            # window in which failed/deferred work keeps being retried (not a sleep timer)
+  max_minutes: 480            # hard stop for one session
+  idle_stop_wait_seconds: 300 # after min runtime, stop if nothing is ready and the next task is further away than this
+  export_every_minutes: 10    # periodic CSV refresh while running
+  max_task_attempts: 4        # a task that fails this many times is marked failed
+  retry_base_seconds: 600     # task retry cooldown: base * 2^(attempts-1)
+  retry_max_seconds: 3600
+  stale_stop_minutes: 60      # after min runtime, stop if no new relevant/borderline item appeared for this long (0 = never)
+
+paths:
+  data_dir: data              # state DB, logs and output live under here (relative to where you run the command)
+
+date_range:
+  since: "2005-06-01"         # Reddit launched June 2005: default is all available history
+  until: null                 # null = now
+
+http:
+  user_agent: "waterboards-feedback-scraper/0.1 (public-feedback research; +https://github.com/kerem06-KS/waterboards-feedback-scraper)"
+  connect_timeout: 10
+  read_timeout: 30
+  max_retries: 3              # in-request retries for 5xx / timeouts / 429
+  backoff_base: 2.0           # seconds; full jitter, doubles each retry
+  backoff_max: 30
+  max_inline_retry_after: 60  # longer Retry-After values are not slept inline; the domain cools down instead
+  max_response_bytes: 15000000
+  failure_threshold: 4        # consecutive failures before a domain cools down
+  cooldown_seconds: 600
+
+# Minimum seconds between requests per domain (plus random jitter as a fraction of the interval).
+domains:
+  api.pullpush.io:                  { interval: 4.0,  jitter: 0.5 }
+  arctic-shift.photon-reddit.com:   { interval: 1.5,  jitter: 0.5 }
+  oauth.reddit.com:                 { interval: 1.2,  jitter: 0.3 }
+  ddgs:                             { interval: 15.0, jitter: 0.6 }
+  default:                          { interval: 3.0,  jitter: 0.5 }
+
+reddit:
+  page_size: 100
+  min_window_days: 7          # a timed-out search window is split in half until it is this small
+  max_split_depth: 9
+  max_dry_pages:              # stop paging a search after this many consecutive pages without any entity hit
+    pullpush: 2
+    arcticshift: 4
+    praw: 1
+  thread_max_pages: 80        # safety cap: 80 pages x 100 = 8000 comments per thread
+  max_discovered_subreddits: 60
+  discovery_results: 15       # search-engine results requested per query
+  lookup_batch: 50            # post ids per lookup request
+  anchors_per_subreddit:      # max search anchors per subreddit, by subreddit tier (tier1 = most relevant subs)
+    1: 80
+    2: 40
+    3: 15
+  url_prefixes:               # link posts pointing at Water Boards sites (Arctic Shift url prefix search)
+    - "https://www.waterboards.ca.gov"
+    - "https://waterboards.ca.gov"
+    - "http://www.waterboards.ca.gov"
+    - "https://smarts.waterboards.ca.gov"
+    - "https://geotracker.waterboards.ca.gov"
+    - "https://ciwqs.waterboards.ca.gov"
+    - "https://wbapps.waterboards.ca.gov"
+    - "https://sdwis.waterboards.ca.gov"
+    - "https://faast.waterboards.ca.gov"
+    - "https://ceden.waterboards.ca.gov"
+    - "https://gamagroundwater.waterboards.ca.gov"
+    - "https://mywaterquality.ca.gov"
+    - "https://www.swrcb.ca.gov"
+
+sources:                      # set enabled: false to skip a source entirely
+  reddit_pullpush:   { enabled: true }
+  reddit_arcticshift: { enabled: true }
+  reddit_discovery:  { enabled: true }   # search-engine discovery of Reddit threads (ddgs)
+  reddit_praw:       { enabled: true }   # only active if REDDIT_CLIENT_ID/SECRET are set and praw is installed
+
+redaction:
+  emails: true
+  phones: true
+  handles: true               # u/name, @handle
+  profile_urls: true
+  street_addresses: true
+
+export:
+  include_borderline: false   # also overridable with: wbscraper export --include-borderline
+  min_text_chars: 12

@@ -1,0 +1,466 @@
+# Entity library. Edit freely; no Python changes needed.
+#
+# kind:     org | system | topic
+# strong:   unambiguous names (case-insensitive) - a hit alone is enough to count as an entity match
+# weak:     ambiguous names; only count when one of the `context` words/groups ("@group") is also present.
+#           case_sensitive: true is used for acronyms that collide with ordinary words (SMARTS vs smarts)
+# domains:  URL fragments, treated as strong
+# weight:   (topic only) score contribution, default from relevance.yaml
+# anchors:  search strings by tier (1 = best yield). Used for subreddit-scoped and search-engine queries.
+# pullpush: SINGLE distinctive tokens for PullPush's fuzzy global search (multi-word queries return junk there)
+# web_extra: additional search-engine-only queries (context-qualified acronyms etc.)
+# tasks:    things people do in the system; used by the natural-language question templates
+# short:    short name used in question templates
+
+entities:
+  # ------------------------------------------------------------------ organisations
+  - id: swrcb
+    label: State Water Resources Control Board
+    kind: org
+    short: the State Water Board
+    strong:
+      - State Water Resources Control Board
+      - State Water Resource Control Board
+      - Water Resources Control Board
+      - State Water Board
+      - State Water Boards
+      - California Water Boards
+      - California Water Board
+      - California State Water Board
+      - State Water Quality Control Board
+      - SWRCB
+      - SWQCB
+      - waterboards.ca.gov
+      - swrcb.ca.gov
+    weak:
+      - { term: water boards, context: ["@california", "@water_reg"] }
+      - { term: water board, context: ["@california", "@water_reg", "permit", "certificate", "operator"] }
+      - { term: the state board, context: ["@water_reg"] }
+    domains: [waterboards.ca.gov, swrcb.ca.gov]
+    anchors:
+      1: [SWRCB, State Water Board, State Water Resources Control Board, California Water Boards, waterboards.ca.gov]
+      2: [Water Resources Control Board, California Water Board, State Water Quality Control Board, swrcb.ca.gov, waterboards website, water board portal]
+      3: [state water board website, water board online application, water board login, water board help desk]
+    pullpush: [SWRCB, waterboards.ca.gov, swrcb.ca.gov, waterboards]
+    web_extra:
+      - '"water board" website california'
+      - '"water board" portal california'
+    tasks: [submit an application, pay a fee, find a form, look up a permit, get a certificate]
+
+  - id: rwqcb
+    label: Regional Water Quality Control Boards
+    kind: org
+    short: the Regional Water Board
+    strong:
+      - Regional Water Quality Control Board
+      - Regional Water Quality Control Boards
+      - Regional Water Board
+      - Regional Water Boards
+      - RWQCB
+      - RWQCBs
+      - NCRWQCB
+      - SFBRWQCB
+      - CCRWQCB
+      - LARWQCB
+      - CVRWQCB
+      - SARWQCB
+      - SDRWQCB
+      - North Coast Regional Water
+      - San Francisco Bay Regional Water
+      - Central Coast Regional Water
+      - Central Coast Water Board
+      - Los Angeles Regional Water
+      - Los Angeles Water Board
+      - Central Valley Regional Water
+      - Central Valley Water Board
+      - Lahontan Regional Water
+      - Lahontan Water Board
+      - Colorado River Basin Regional Water
+      - Colorado River Basin Water Board
+      - Santa Ana Regional Water
+      - Santa Ana Water Board
+      - San Diego Regional Water
+      - San Diego Water Board
+      - North Coast Water Board
+      - San Francisco Bay Water Board
+    weak:
+      - { term: regional board, context: ["@water_reg", "@california", "permit", "discharge"] }
+    anchors:
+      1: [RWQCB, Regional Water Quality Control Board, Regional Water Board]
+      2: [Central Valley Water Board, Los Angeles Regional Water Board, San Francisco Bay Regional Water Board, Santa Ana Regional Water Board, San Diego Regional Water Board, Lahontan Regional Water Board, Central Coast Regional Water Board, North Coast Regional Water Board, Colorado River Basin Regional Water Board]
+      3: [regional water board website, regional water board online, regional water board permit portal]
+    pullpush: [RWQCB, RWQCBs, LARWQCB, CVRWQCB, SFBRWQCB]
+    tasks: [submit a report, apply for a permit, find a document, check a case]
+
+  - id: divisions
+    label: Water Boards divisions and offices
+    kind: org
+    short: the Water Board
+    strong:
+      - Division of Drinking Water
+      - Division of Water Quality
+      - Division of Water Rights
+      - Division of Financial Assistance
+      - Office of Information Management and Analysis
+      - Office of Operator Certification
+      - Delta Watermaster
+    weak:
+      - { term: DDW, case_sensitive: true, context: ["drinking water", "@water_reg"] }
+      - { term: DWQ, case_sensitive: true, context: ["@water_reg", "water quality"] }
+      - { term: DFA, case_sensitive: true, context: ["financial assistance", "@financial_ctx"] }
+    anchors:
+      1: [Division of Drinking Water, Division of Water Rights, Division of Water Quality]
+      2: [Division of Financial Assistance, Office of Operator Certification]
+      3: [DDW drinking water California]
+    pullpush: []
+    tasks: [submit a report, get a permit, reach staff]
+
+  # ------------------------------------------------------------------ systems
+  - id: smarts
+    label: SMARTS (Stormwater Multiple Application and Report Tracking System)
+    kind: system
+    short: SMARTS
+    strong:
+      - Stormwater Multiple Application and Report Tracking System
+      - Storm Water Multiple Application and Report Tracking System
+      - Stormwater Multi-Application Reporting & Tracking System
+      - Stormwater Multi-Application Reporting and Tracking System
+      - smarts.waterboards.ca.gov
+      - SMARTS database
+      - SMARTS stormwater
+      - SMARTS storm water
+      - stormwater SMARTS
+      - SMARTS NOI
+      - SMARTS SWPPP
+      - SMARTS annual report
+    weak:
+      - { term: SMARTS, case_sensitive: true, context: ["@stormwater"] }
+    domains: [smarts.waterboards.ca.gov]
+    anchors:
+      1: [SMARTS stormwater, smarts.waterboards.ca.gov, Stormwater Multiple Application and Report Tracking System, SMARTS database]
+      2: [SMARTS, SMARTS NOI, SMARTS annual report, SMARTS SWPPP, SMARTS login, SMARTS Data Submitter, SMARTS LRP, SMARTS WDID]
+      3: [SMARTS storm water permit, SMARTS construction general permit, SMARTS industrial general permit, SMARTS upload, SMARTS error]
+    pullpush: [smarts.waterboards.ca.gov]
+    web_extra:
+      - '"SMARTS" stormwater annual report problem'
+      - '"SMARTS" "Data Submitter" stormwater'
+      - '"SMARTS" stormwater "legally responsible person"'
+    tasks: [submit the annual report, file an NOI, certify a NOT, upload a SWPPP, add a Data Submitter, reset my password]
+
+  - id: geotracker
+    label: GeoTracker
+    kind: system
+    short: GeoTracker
+    strong:
+      - geotracker.waterboards.ca.gov
+      - GeoTracker ESI
+      - GeoTracker EDF
+      - GeoTracker Global ID
+      - GeoTracker upload
+      - GeoTracker UST
+      - GeoTracker LUST
+      - GeoTracker cleanup
+      - GeoTracker water board
+      - GeoTracker waterboards
+      - GeoTracker SWRCB
+      - GeoTracker Electronic Submittal of Information
+      - Electronic Submittal of Information
+      - GEO_XY
+      - GEO_WELL
+      - GEO_BORE
+      - GEO_REPORT
+      - GeoWell
+    weak:
+      - { term: GeoTracker, context: ["@geotracker_ctx"] }
+      - { term: Geo Tracker, context: ["@geotracker_ctx"] }
+    domains: [geotracker.waterboards.ca.gov]
+    anchors:
+      1: [GeoTracker, geotracker.waterboards.ca.gov, GeoTracker ESI, GeoTracker EDF, GeoTracker Global ID]
+      2: [GeoTracker upload, GeoTracker login, GeoTracker UST, GeoTracker LUST, GEO_XY, GEO_WELL, Electronic Submittal of Information, GeoTracker report]
+      3: [GeoTracker error, GeoTracker account, GeoTracker EDF rejected, GeoTracker site cleanup, GeoTracker consultant]
+    pullpush: [GeoTracker, geotracker.waterboards.ca.gov, GEO_XY, GEO_WELL]
+    web_extra:
+      - '"GeoTracker" "EDF" upload error'
+      - '"GeoTracker" "Global ID" California'
+    tasks: [upload an EDF, upload a report, find a site, get a Global ID, register an account, submit a GEO_XY file]
+
+  - id: ciwqs
+    label: CIWQS (California Integrated Water Quality System)
+    kind: system
+    short: CIWQS
+    strong:
+      - CIWQS
+      - California Integrated Water Quality System
+      - ciwqs.waterboards.ca.gov
+      - eSMR
+      - electronic self-monitoring report
+      - electronic self monitoring report
+    domains: [ciwqs.waterboards.ca.gov]
+    anchors:
+      1: [CIWQS, California Integrated Water Quality System, ciwqs.waterboards.ca.gov, eSMR]
+      2: [CIWQS login, CIWQS spill, CIWQS SSO, CIWQS violation, CIWQS annual report, CIWQS online, CIWQS submitter, CIWQS password]
+      3: [CIWQS error, CIWQS eSMR upload, CIWQS NOI, CIWQS regulated facility, CIWQS discharger]
+    pullpush: [CIWQS, ciwqs.waterboards.ca.gov, eSMR]
+    tasks: [submit an eSMR, report a spill, submit an annual report, reset my password, find a violation report]
+
+  - id: ocis
+    label: OCIS / operator certification systems
+    kind: system
+    short: the operator certification portal
+    strong:
+      - Operator Certification Information System
+      - wbapps.waterboards.ca.gov/opcert
+      - Drinking Water Operator Certification Program
+      - Wastewater Operator Certification Program
+      - DWOCP
+      - WWOCP
+      - Office of Operator Certification
+    weak:
+      - { term: OCIS, case_sensitive: true, context: ["@operator_ctx"] }
+    domains: [wbapps.waterboards.ca.gov/opcert]
+    anchors:
+      1: [Operator Certification Information System, DWOCP, WWOCP, wastewater operator certification California, drinking water operator certification California]
+      2: [OCIS operator certification, operator certification renewal California, water treatment operator renewal California, wastewater operator renewal California, California water operator certificate, SWRCB operator certification]
+      3: [operator certification portal, operator certification online application, operator certification exam application California, CWEA grade, T2 operator renewal, D3 distribution operator renewal]
+    pullpush: [DWOCP, WWOCP, wbapps.waterboards.ca.gov]
+    web_extra:
+      - '"OCIS" operator certification california'
+      - '"operator certification" "water board" renewal online'
+    tasks: [renew my certificate, apply for the exam, update my contact info, submit continuing education hours, pay the renewal fee, check my application status]
+
+  - id: calwatrs
+    label: CalWATRS / eWRIMS (water rights reporting)
+    kind: system
+    short: CalWATRS
+    strong:
+      - CalWATRS
+      - Cal WATRS
+      - California Water Accounting, Tracking, and Reporting System
+      - eWRIMS
+      - Electronic Water Rights Information Management System
+      - Water Rights Online Forms Portal
+      - UPWARD project
+      - Updating Water Rights Data for California
+    weak:
+      - { term: UPWARD, case_sensitive: true, context: ["@water_rights_ctx"] }
+    anchors:
+      1: [CalWATRS, eWRIMS, California Water Accounting Tracking and Reporting System]
+      2: [CalWATRS PIN, CalWATRS login, CalWATRS annual report, Statement of Diversion and Use, water rights annual report California, Water Rights Online Forms Portal]
+      3: [CalWATRS error, CalWATRS account, CalWATRS organization, water rights reporting California online, supplemental statement of water diversion]
+    pullpush: [CalWATRS, eWRIMS]
+    tasks: [create an account, activate my PIN, file an annual report, update ownership information, submit a Statement of Diversion and Use]
+
+  - id: dww
+    label: Drinking Water Watch / SDWIS
+    kind: system
+    short: Drinking Water Watch
+    strong:
+      - Drinking Water Watch
+      - sdwis.waterboards.ca.gov
+    anchors:
+      1: [Drinking Water Watch, sdwis.waterboards.ca.gov]
+      2: [Drinking Water Watch California, drinking water watch lookup]
+      3: []
+    pullpush: [sdwis.waterboards.ca.gov]
+    tasks: [look up a water system, find sample results]
+
+  - id: ear
+    label: eAR (Electronic Annual Report, drinking water)
+    kind: system
+    short: the Electronic Annual Report
+    strong:
+      - Electronic Annual Report
+      - eAR drinking water
+      - eAR water system
+      - drinking water eAR
+    weak:
+      - { term: eAR, case_sensitive: true, context: ["drinking water", "water system", "@water_reg"] }
+    anchors:
+      1: [Electronic Annual Report drinking water, eAR drinking water]
+      2: [eAR water system California, Electronic Annual Report water board]
+      3: []
+    pullpush: []
+    tasks: [submit the eAR, log in to the eAR, fix an eAR error]
+
+  - id: elap
+    label: ELAP (Environmental Laboratory Accreditation Program)
+    kind: system
+    short: ELAP
+    strong:
+      - Environmental Laboratory Accreditation Program
+      - ELAP accreditation
+      - ELAP certification
+    weak:
+      - { term: ELAP, case_sensitive: true, context: ["@lab_ctx"] }
+    anchors:
+      1: [Environmental Laboratory Accreditation Program, ELAP accreditation California]
+      2: [ELAP certification California, ELAP portal]
+      3: []
+    pullpush: []
+    tasks: [renew accreditation, submit proficiency testing results]
+
+  - id: faast
+    label: FAAST (Financial Assistance Application Submittal Tool)
+    kind: system
+    short: FAAST
+    strong:
+      - Financial Assistance Application Submittal Tool
+      - faast.waterboards.ca.gov
+    weak:
+      - { term: FAAST, case_sensitive: true, context: ["@financial_ctx"] }
+    domains: [faast.waterboards.ca.gov]
+    anchors:
+      1: [Financial Assistance Application Submittal Tool, faast.waterboards.ca.gov, FAAST SRF]
+      2: [FAAST water board, FAAST drinking water funding, FAAST application]
+      3: []
+    pullpush: [faast.waterboards.ca.gov]
+    tasks: [submit a funding application, upload documents, register an account]
+
+  - id: ceden
+    label: CEDEN
+    kind: system
+    short: CEDEN
+    strong:
+      - California Environmental Data Exchange Network
+      - ceden.waterboards.ca.gov
+    weak:
+      - { term: CEDEN, case_sensitive: true, context: ["@water_reg", "data", "monitoring"] }
+    domains: [ceden.waterboards.ca.gov]
+    anchors:
+      1: [CEDEN, California Environmental Data Exchange Network, ceden.waterboards.ca.gov]
+      2: [CEDEN data upload, CEDEN water quality data]
+      3: []
+    pullpush: [CEDEN, ceden.waterboards.ca.gov]
+    tasks: [upload data, query data, download data]
+
+  - id: gama
+    label: GAMA Groundwater Information System
+    kind: system
+    short: GAMA
+    strong:
+      - gamagroundwater.waterboards.ca.gov
+      - GAMA Groundwater Information System
+      - GAMA groundwater
+    weak:
+      - { term: GAMA, case_sensitive: true, context: ["@groundwater_ctx"] }
+    domains: [gamagroundwater.waterboards.ca.gov]
+    anchors:
+      1: [GAMA groundwater, gamagroundwater.waterboards.ca.gov, GAMA Groundwater Information System]
+      2: [GAMA groundwater California map]
+      3: []
+    pullpush: [gamagroundwater.waterboards.ca.gov]
+    tasks: [find well data, download data]
+
+  - id: mywq
+    label: My Water Quality and public data portals
+    kind: system
+    short: My Water Quality
+    strong:
+      - mywaterquality.ca.gov
+      - My Water Quality portal
+    weak:
+      - { term: My Water Quality, context: ["california", "@water_reg"] }
+    domains: [mywaterquality.ca.gov]
+    anchors:
+      1: [mywaterquality.ca.gov, My Water Quality California]
+      2: [SAFER Drinking Water dashboard, Water Conservation Portal California]
+      3: []
+    pullpush: [mywaterquality.ca.gov]
+    tasks: [look up my water system, find data]
+
+  - id: conservation_portal
+    label: Water Conservation Portal / SAFER dashboard
+    kind: system
+    short: the Water Conservation Portal
+    strong:
+      - Water Conservation Portal
+      - SAFER Drinking Water Dashboard
+      - SAFER dashboard
+      - Water Supplier Lookup Tool
+    anchors:
+      1: [Water Conservation Portal, SAFER dashboard]
+      2: [Monthly Conservation Reporting, Water Supplier Lookup Tool]
+      3: []
+    pullpush: []
+    tasks: [submit the monthly report, look up a supplier]
+
+  - id: ust_fund
+    label: UST Cleanup Fund online services
+    kind: system
+    short: the UST Cleanup Fund
+    strong:
+      - UST Cleanup Fund
+      - Underground Storage Tank Cleanup Fund
+      - Petroleum UST Cleanup Fund
+    anchors:
+      1: [UST Cleanup Fund, Underground Storage Tank Cleanup Fund]
+      2: [UST Cleanup Fund claim online, UST Cleanup Fund portal]
+      3: []
+    pullpush: []
+    tasks: [file a claim, check claim status, upload documents]
+
+  # ------------------------------------------------------------------ topics (need other signals to matter)
+  - id: opcert_topic
+    label: Operator certification (topic)
+    kind: topic
+    weight: 1.5
+    strong:
+      - operator certification renewal
+      - operator certification application
+      - wastewater operator certification
+      - water treatment operator certification
+      - water distribution operator certification
+      - drinking water operator certification
+      - water operator certificate
+      - wastewater operator certificate
+      - treatment operator renewal
+      - distribution operator renewal
+      - operator in training
+    anchors:
+      1: []
+      2: [operator certification renewal, wastewater operator certification, water treatment operator certification, water operator certificate renewal]
+      3: [operator-in-training certification, operator exam application]
+    pullpush: []
+
+  - id: stormwater_topic
+    label: Stormwater permitting jargon (topic)
+    kind: topic
+    weight: 1.5
+    strong:
+      - WDID
+      - Construction General Permit
+      - Industrial General Permit
+      - stormwater annual report
+      - storm water annual report
+      - Notice of Intent stormwater
+      - Notice of Termination stormwater
+      - Legally Responsible Person
+      - Level 1 ERA
+      - Level 2 ERA
+      - NEC exemption
+    weak:
+      - { term: SWPPP, case_sensitive: true, context: ["california", "@water_reg"] }
+      - { term: QSD, case_sensitive: true, context: ["california", "@stormwater"] }
+      - { term: QSP, case_sensitive: true, context: ["california", "@stormwater"] }
+    anchors:
+      1: []
+      2: [WDID, Construction General Permit California, Industrial General Permit California, Legally Responsible Person stormwater]
+      3: [stormwater annual report California, SWPPP California upload, QSD QSP California]
+    pullpush: [WDID]
+
+  - id: wq_misc_topic
+    label: Other Water Boards programs (topic)
+    kind: topic
+    weight: 1.5
+    strong:
+      - Cannabis General Order
+      - Cannabis Cultivation Policy
+      - Sanitary Sewer Overflow
+      - SSO reporting
+      - Statement of Diversion and Use
+      - Report of Licensee
+    anchors:
+      1: []
+      2: [Cannabis General Order, Statement of Diversion and Use, Sanitary Sewer Overflow reporting]
+      3: [cannabis water board enrollment, Report of Licensee water rights]
+    pullpush: []

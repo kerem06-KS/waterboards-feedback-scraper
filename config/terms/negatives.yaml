@@ -1,0 +1,27 @@
+# Penalties for look-alikes. pattern/when are regular expressions (case-insensitive unless noted).
+# unless_context: words/groups; if any is present the penalty is skipped.
+negatives:
+  - id: waterboarding
+    pattern: '\bwater-?board(?:ing|ed|s)?\b.{0,40}\b(torture|interrogat|cia|guantanamo|detainee)'
+    penalty: 6
+  - id: waterboarding_word
+    pattern: '\bwaterboard(?:ing|ed)\b'
+    penalty: 6
+  - id: geotracker_other_products
+    when: 'geo\s?tracker'
+    pattern: '\b(gps|gpx|android|ios|iphone|app store|play store|houdini|seo|llm|chatgpt|ai search|ai visibility|generative engine|saas|geo-?targeting|vehicle|truck|motorcycle|dog|pet tracker|backpack|hiking|garmin)\b'
+    penalty: 3
+    unless_context: ["@geotracker_ctx"]
+  - id: smarts_other_products
+    when: 'SMARTS'
+    pattern: '\b(solar|irradiance|spectral|atmospheric|sunlight|smart contract|insurance|mutual fund|trading)\b'
+    penalty: 4
+    unless_context: ["@stormwater"]
+  - id: other_water_boards
+    pattern: '\b(texas water development board|tceq|kenya|nairobi|sri lanka|bangladesh|dwasa|karnataka|bangalore|bwssb|hyderabad|dutch water board|waterschap|auckland|cape town|ofwat|welsh water|severn trent|thames water|johannesburg|pakistan|wapda|lahore|karachi|nigeria|ghana)\b'
+    penalty: 3
+    unless_context: ["@california"]
+  - id: sports_waterboard
+    pattern: '\b(wake ?board|kite ?board|paddle ?board|skim ?board|surf ?board)\b'
+    penalty: 2
+    unless_context: ["@water_reg"]

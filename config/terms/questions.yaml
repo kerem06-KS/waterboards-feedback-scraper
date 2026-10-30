@@ -1,0 +1,43 @@
+# Natural-language question templates. {system} is replaced by each entity's `short` name,
+# {task} by each of its `tasks`. Templates without {system} are used as-is.
+
+system_templates:
+  - "has anyone used {system}"
+  - "anyone having problems with {system}"
+  - "anyone else having trouble with {system}"
+  - "is {system} down"
+  - "{system} not working"
+  - "{system} login problem"
+  - "can't log into {system}"
+  - "{system} is so slow"
+  - "{system} confusing"
+  - "{system} help"
+  - "{system} experience"
+  - "what do you think of {system}"
+
+task_templates:
+  - "how do I {task} in {system}"
+  - "can't {task} in {system}"
+  - "{system} won't let me {task}"
+
+generic:
+  - "is the water board website down"
+  - "state water board website not working"
+  - "water board portal login problem"
+  - "water board online application won't submit"
+  - "how do I renew my water operator certification"
+  - "how do I renew my wastewater operator certificate California"
+  - "I can't submit my application to the water board"
+  - "water board certification portal error"
+  - "water board website hard to use"
+  - "water board website confusing"
+  - "water board website accessibility"
+  - "regional water board portal not working"
+  - "SWRCB login problem"
+  - "SWRCB website down"
+  - "water board online payment problem"
+  - "water board help desk no response"
+  - "California water board still processing my application"
+  - "California stormwater permit online system problem"
+  - "California water rights reporting website problem"
+  - "California drinking water operator renewal online"

@@ -1,0 +1,143 @@
+# Context word groups. Referenced from entities.yaml as "@group_name".
+groups:
+  california:
+    - california
+    - calif
+    - sacramento
+    - calepa
+    - "cal/epa"
+    - "bay area"
+    - "los angeles"
+    - "san diego"
+    - fresno
+    - "san francisco"
+    - oakland
+    - "central valley"
+    - "central coast"
+    - "inland empire"
+    - "orange county"
+    - lahontan
+    - "santa ana"
+    - "north coast"
+    - "in ca"
+    - ", ca"
+    - "ca water"
+    - "state of ca"
+  water_reg:
+    - "water board"
+    - "water boards"
+    - waterboards
+    - "regional board"
+    - "state board"
+    - npdes
+    - wdr
+    - stormwater
+    - "storm water"
+    - wastewater
+    - "waste water"
+    - "drinking water"
+    - "water quality"
+    - "water rights"
+    - swppp
+    - "discharge permit"
+    - "general permit"
+    - "waste discharge"
+    - "water system"
+  stormwater:
+    - stormwater
+    - "storm water"
+    - swppp
+    - noi
+    - "construction general permit"
+    - cgp
+    - "industrial general permit"
+    - igp
+    - "annual report"
+    - "water board"
+    - waterboards
+    - qsd
+    - qsp
+    - wdid
+    - npdes
+    - bmp
+    - discharger
+    - "construction site"
+    - "ms4"
+  geotracker_ctx:
+    - ust
+    - lust
+    - "underground storage"
+    - cleanup
+    - "clean-up"
+    - groundwater
+    - "ground water"
+    - remediation
+    - "monitoring well"
+    - edf
+    - esi
+    - "global id"
+    - "water board"
+    - waterboards
+    - "regional board"
+    - consultant
+    - "site assessment"
+    - "phase ii"
+    - "phase i"
+    - "lab report"
+    - "electronic deliverable"
+    - "case closure"
+    - boring
+    - "soil"
+    - "contamination"
+    - "swrcb"
+  operator_ctx:
+    - operator
+    - certification
+    - certificate
+    - wastewater
+    - "water treatment"
+    - distribution
+    - "grade"
+    - renewal
+    - "continuing education"
+    - ceu
+    - exam
+    - "water board"
+    - waterboards
+    - "state water"
+  financial_ctx:
+    - srf
+    - grant
+    - loan
+    - funding
+    - "financial assistance"
+    - "drinking water"
+    - "clean water"
+    - "water board"
+    - waterboards
+    - application
+  lab_ctx:
+    - laboratory
+    - lab
+    - accreditation
+    - "environmental laboratory"
+    - nelap
+    - tni
+    - "water board"
+  groundwater_ctx:
+    - groundwater
+    - "ground water"
+    - aquifer
+    - well
+    - gama
+    - "water board"
+  water_rights_ctx:
+    - "water right"
+    - "water rights"
+    - diversion
+    - "statement of diversion"
+    - riparian
+    - appropriative
+    - "water board"
+    - waterboards
+    - reporting

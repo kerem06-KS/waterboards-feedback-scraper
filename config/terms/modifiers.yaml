@@ -1,0 +1,236 @@
+# Signal and search-modifier vocabulary. Matched case-insensitively on word boundaries.
+# `digital` = union of the groups below that describe using a website / online system.
+
+technical_issue:
+  - error
+  - error message
+  - bug
+  - buggy
+  - crash
+  - crashes
+  - crashed
+  - broken
+  - not working
+  - doesn't work
+  - does not work
+  - won't load
+  - won't let me
+  - outage
+  - unavailable
+  - down for maintenance
+  - login
+  - log in
+  - log-in
+  - sign in
+  - password
+  - reset password
+  - locked out
+  - authentication
+  - 2fa
+  - verification code
+  - timeout
+  - timed out
+  - timing out
+  - slow
+  - loading
+  - page not found
+  - 500 error
+  - 404
+  - upload failed
+  - failed to upload
+  - couldn't upload
+  - can't upload
+  - submission failed
+  - can't submit
+  - cannot submit
+  - unable to submit
+  - can't access
+  - cannot access
+  - unable to access
+  - payment failed
+  - payment issue
+  - renewal problem
+  - glitch
+  - stuck
+  - freezes
+  - frozen
+  - blank page
+  - internet explorer
+  - validation error
+  - file size limit
+  - tech support
+  - technical support
+  - help desk
+  - helpdesk
+  - no response
+  - never heard back
+  - is down
+  - not loading
+  - rejected
+
+ux:
+  - confusing
+  - confused
+  - unclear
+  - hard to navigate
+  - difficult to navigate
+  - navigation
+  - can't find
+  - cannot find
+  - hard to find
+  - where do i find
+  - outdated
+  - clunky
+  - archaic
+  - not intuitive
+  - unintuitive
+  - user friendly
+  - user-friendly
+  - mobile friendly
+  - mobile-friendly
+  - on my phone
+  - accessibility
+  - screen reader
+  - wcag
+  - pdf only
+  - paper form
+  - duplicate data entry
+  - too many steps
+  - tedious
+  - cumbersome
+  - poorly designed
+  - bad design
+  - missing information
+  - no instructions
+  - interface
+  - search function
+  - user guide
+  - training video
+
+digital_nouns:
+  - website
+  - web site
+  - web page
+  - webpage
+  - portal
+  - online
+  - online system
+  - online form
+  - online application
+  - online payment
+  - web form
+  - e-file
+  - efile
+  - e-filing
+  - electronically
+  - electronic submittal
+  - electronic reporting
+  - dashboard
+  - database
+  - account
+  - upload
+  - uploaded
+  - download
+  - submit
+  - submitted
+  - submission
+  - email notification
+  - confirmation email
+  - browser
+  - chrome
+  - firefox
+  - safari
+
+process_delay:
+  - processing time
+  - delayed
+  - delay
+  - backlog
+  - still waiting
+  - been waiting
+  - weeks
+  - pending
+  - application status
+  - no confirmation
+  - never received
+  - not received
+
+experience_negative:
+  - frustrating
+  - frustrated
+  - nightmare
+  - ridiculous
+  - terrible
+  - awful
+  - horrible
+  - waste of time
+  - useless
+  - unacceptable
+  - annoying
+  - worst
+  - hate
+  - pain
+  - struggling
+  - problem
+  - issues
+  - trouble
+
+experience_positive:
+  - easy
+  - easier
+  - helpful
+  - great
+  - works well
+  - finally
+  - improved
+  - straightforward
+  - smooth
+  - love
+  - thanks
+  - worked
+  - fixed
+  - resolved
+  - responsive
+  - quick
+
+experience_question:
+  - has anyone
+  - anyone else
+  - anyone know
+  - does anyone
+  - how do i
+  - how can i
+  - how to
+  - is there a way
+  - any idea
+  - is it just me
+  - why is
+  - why does
+  - can't figure
+  - help with
+  - advice
+  - tips
+
+# Modifiers used to build search queries (anchor + modifier). Highest-yield first.
+query_modifiers:
+  - login problem
+  - not working
+  - error
+  - can't submit
+  - website down
+  - password reset
+  - upload failed
+  - confusing
+  - slow
+  - help desk
+  - how do I
+  - renewal
+  - payment issue
+  - accessibility
+  - outdated
+  - mobile
+  - experience
+  - feedback
+  - review
+  - easy to use
+  - improved

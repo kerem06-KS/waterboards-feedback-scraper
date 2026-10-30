@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "waterboards-feedback-scraper"
+version = "0.1.0"
+description = "Collects public feedback about California Water Boards websites and online systems into a single CSV."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "httpx>=0.27",
+  "python-dateutil>=2.8",
+  "PyYAML>=6.0",
+  "rich>=13.0",
+  "ddgs>=9.0",
+]
+
+[project.optional-dependencies]
+reddit = ["praw>=7.7"]
+dev = ["pytest>=8", "respx>=0.21"]
+
+[project.scripts]
+wbscraper = "wbscraper.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+addopts = "-q"

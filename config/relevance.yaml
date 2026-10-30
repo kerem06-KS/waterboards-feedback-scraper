@@ -1,0 +1,21 @@
+# Rule-based relevance scoring. Scores add up; the tier is decided by the thresholds.
+thresholds:
+  relevant: 4.0      # exported by default
+  borderline: 2.5    # stored and counted; exported only with --include-borderline
+
+weights:
+  entity_strong: 3.0         # unambiguous system / org name or Water Boards domain
+  entity_weak_with_context: 2.5
+  entity_weak_no_context: 0.5
+  topic_default: 1.5         # topic phrases ("operator certification renewal") need other signals to matter
+  digital_first: 1.5         # first distinct digital/technical/UX/process term
+  digital_additional: 0.5
+  digital_cap: 2.5
+  experience_first: 0.5      # complaints, praise, questions
+  experience_additional: 0.25
+  experience_cap: 1.0
+  california_context: 1.0    # only applied when an entity/topic or digital signal exists
+  thread_context: 2.5        # comment inside a thread already judged relevant
+  policy_only_penalty: -1.0  # organisation-only mention with no digital/service signal
+  max_penalty: -6.0
+  no_anchor_cap: 1.0         # no entity, no topic and no thread context -> total capped here
