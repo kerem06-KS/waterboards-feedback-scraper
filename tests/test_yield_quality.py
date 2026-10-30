@@ -1,8 +1,9 @@
 """Why a run found few "relevant" items, and the fixes: item-type aware gates, source caps, letter classification.
 
-`fixtures/yield_cases.json` holds 40 real records from a collection database, labelled by hand: 8 genuine
-usability feedback items that must stay relevant, and 31 that the earlier gates exported but are not public feedback
-(passing mentions, agency pages and bulletins, vendor marketing, site checkers, code-change titles).
+`fixtures/yield_cases.json` holds 39 real records from a collection database, labelled by hand: 12 genuine items
+(complaints, questions, and people using or explaining a named Water Boards system) that must stay relevant, and 27
+that the earlier gates exported but are not public feedback (passing mentions, agency pages and bulletins, vendor
+marketing, site checkers, code-change titles).
 """
 import json
 from pathlib import Path
@@ -44,7 +45,7 @@ def classify(scorer, case, thread_relevant=None):
 
 
 def test_fixture_is_labelled():
-    assert len(GENUINE) == 8 and len(JUNK) == 31
+    assert len(GENUINE) == 12 and len(JUNK) == 27
 
 
 @pytest.mark.parametrize("case", GENUINE, ids=lambda c: c["text"][:28])
@@ -60,10 +61,10 @@ def test_what_is_not_public_feedback_is_never_relevant(scorer, case):
 
 # --------------------------------------------------------------------------------------------- scoring rules
 @pytest.mark.parametrize("text", [
-    "Groundwater moves extremely slow. You can look the site up on the state water board GeoTracker website.",
+    "Groundwater moves extremely slow. The state water board has the cleanup case, you can read about it elsewhere.",
     "I would reach out to the regional water board. It could be a broken pipe in the complex. They list a contact on their website.",
     "California has many regulatory agencies that are hard to navigate, so a job at the State Water Board is a good start.",
-    "Check the GeoTracker website for your site, then confirm the case number with the State Water Board. Helpful tool.",
+    "Contamination there is below the level of concern, tests confirm it. The GeoTracker case number is T0600112233.",
 ])
 def test_a_passing_mention_with_a_stray_experience_word_is_not_relevant(scorer, text):
     assert scorer.score(text).tier != "relevant"
@@ -80,9 +81,28 @@ def test_real_usability_reports_questions_and_walkthroughs_are_relevant(scorer, 
     assert scorer.score(text).tier == "relevant"
 
 
-def test_a_single_step_pointer_to_the_site_is_only_borderline(scorer):
-    s = scorer.score("Go to the GeoTracker website and you can find every UST cleanup report for the site.")
-    assert s.tier == "borderline"
+@pytest.mark.parametrize("text", [
+    "Go to the GeoTracker website and you can find every UST cleanup report for the site.",
+    "Groundwater moves extremely slow. You can look the site up on the state water board GeoTracker website.",
+    "Check the GeoTracker website for your site, then confirm the case number with the State Water Board.",
+    "I can log in to the regulator portal for GeoTracker and see the UST cleanup cases, my id shows up as USEPA.",
+    "What trips people up about GeoTracker is that all UST cleanup files uploaded have to be related to each other.",
+])
+def test_a_person_using_or_explaining_a_named_system_is_relevant(scorer, text):
+    s = scorer.score(text)
+    assert s.tier == "relevant" and s.connection == "system"
+
+
+@pytest.mark.parametrize("text,kwargs", [
+    ("Go to the GeoTracker website and you can find every UST cleanup report for the site.", {"kind": "article"}),
+    ("Happy to help! Over 60 waterways sampled; as you plan your weekend, please check out the CA Harmful Algal Bloom Web Map on mywaterquality.ca.gov", {}),
+    ("The California Division of Drinking Water is gearing up for the Electronic Annual Report! Training sessions you won't want to miss! Click to read more! #CA", {}),
+    ("Use the Texas Drinking Water Watch website from TCEQ to see your water system history.", {}),
+    ("Ship live SMARTS leads: the command center now uses the SMARTS stormwater website search to rank facilities.", {"allow_usage": False}),
+    ("I use my phone to look up recipes and search for a good cleanup crew before I go to the lake.", {}),
+])
+def test_usage_rule_needs_a_real_connection_and_a_person(scorer, text, kwargs):
+    assert scorer.score(text, **kwargs).tier != "relevant"
 
 
 def test_authored_documents_need_a_real_complaint_not_praise_or_a_question(scorer):
@@ -241,3 +261,45 @@ def test_comment_index_pages_hint_letters_and_agency_files_are_not_downloaded(tm
     assert route.called and not skipped.called
     c = app.db.counters()
     assert c["wb_letters"] == 1 and c["wb_pdfs_skipped_by_name"] == 1
+
+
+def test_thread_followups_queue_only_relevant_reddit_threads_and_are_idempotent(tmp_path):
+    from wbscraper.rescore import queue_thread_followups
+    from wbscraper.sources.reddit_tasks import FAR_FUTURE
+    app, _ = make_app(tmp_path)
+    for tuid, expanded in (("reddit:t3_new", 0), ("reddit:t3_done", 1)):
+        app.db.upsert_thread(tuid, "reddit", community="geology", relevant=True)
+        if expanded:
+            app.db.mark_thread_expanded(tuid)
+    app.db.upsert_thread("reddit:t3_other", "reddit", community="x", relevant=False)
+    app.db.upsert_thread("hn:s1", "hackernews", relevant=True)
+    app.db.commit()
+    first = queue_thread_followups(app.db, 1117584000)
+    assert first == {"expansions": 1, "rescans": 1, "post_lookups": 2}
+    tasks = {__import__("json").loads(r["payload"]).get("post_id"): __import__("json").loads(r["payload"])
+             for r in app.db.conn.execute("SELECT payload FROM tasks WHERE type='reddit_thread'")}
+    assert set(tasks) == {"new", "done"} and tasks["done"]["rescan"] is True and tasks["new"]["before"] == FAR_FUTURE
+    assert queue_thread_followups(app.db, 1117584000) == {"expansions": 0, "rescans": 0, "post_lookups": 0}
+
+
+@pytest.mark.parametrize("text", [
+    "If you can find a 1990 model, you get a much safer dashboard!",
+    "The data comes from the 'Water Conservation Portal' (SWRCB 2016), straight from the municipalities.",
+    "Our utility launched a new water conservation portal for customers to track their usage and search rebates.",
+    "If you live in the US, google your state's drinking water watch to see the system's sample results.",
+    "Use the Texas Drinking Water Watch website from TCEQ to look up your water system history.",
+])
+def test_generic_names_and_the_systems_own_name_are_not_a_person_using_a_system(scorer, text):
+    assert scorer.score(text).tier != "relevant"
+
+
+def test_the_real_portals_still_count_when_the_text_names_california_and_describes_use(scorer):
+    assert scorer.score("I use the California Water Conservation Portal to look up my supplier's monthly report.").tier == "relevant"
+    assert scorer.score("California's Drinking Water Watch lets you search any water system's sample results.").tier == "relevant"
+
+
+def test_the_word_use_alone_does_not_make_a_funding_program_a_system_being_used(scorer):
+    text = ("The state UST cleanup fund is set to end next year and a whole lot of resources being used on sites that "
+            "do not pose a risk seems inefficient.")
+    assert scorer.score(text).tier != "relevant"
+    assert scorer.score("You can use the GeoTracker website to find UST cleanup cases near you.").tier == "relevant"

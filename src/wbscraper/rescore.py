@@ -82,7 +82,7 @@ def rescore_all(db, scorer: RelevanceScorer, *, prune: bool = True, retired_quer
     prev = {r["uid"]: r["tier"] for r in db.conn.execute("SELECT uid, tier FROM items")}
     results = {}
     for r in rows:
-        s = cap_tier(scorer.score(r["text"], thread_relevant=False, hint=score_hint(r), kind=effective_kind(r)), cap_of(r))
+        s = cap_tier(scorer.score(r["text"], thread_relevant=False, hint=score_hint(r), kind=effective_kind(r), allow_usage=r["source"] != "github"), cap_of(r))
         results[r["uid"]] = s
         if s.relevant and r["thread_uid"]:
             db.upsert_thread(r["thread_uid"], r["source"] or "rescore", community=r["community"], relevant=True)
@@ -91,7 +91,7 @@ def rescore_all(db, scorer: RelevanceScorer, *, prune: bool = True, retired_quer
     own = {uid: s.relevant for uid, s in results.items()}
     for r in rows:
         if not own[r["uid"]] and db.thread_relevant(r["thread_uid"]):
-            results[r["uid"]] = cap_tier(scorer.score(r["text"], thread_relevant=True, hint=score_hint(r), kind=effective_kind(r)), cap_of(r))
+            results[r["uid"]] = cap_tier(scorer.score(r["text"], thread_relevant=True, hint=score_hint(r), kind=effective_kind(r), allow_usage=r["source"] != "github"), cap_of(r))
     changed = 0
     for uid, s in results.items():
         db.update_item_score(uid, s.tier, int(own[uid]), s.total, int(s.entity_hit), json.dumps(s.reasons))
@@ -145,3 +145,28 @@ def prune_stale_work(db, retired_queries: list[str]) -> dict[str, int]:
     db.commit()
     cancelled["subreddits_forgotten"] = len(dropped)
     return cancelled
+
+
+def queue_thread_followups(db, since_ts: int, until_ts: int | None = None) -> dict[str, int]:
+    """Queue collection of the other comments in Reddit threads that are relevant now.
+
+    A thread that only became relevant after a rescore never had its replies collected (or collected without the
+    thread context, so they were dropped). Same task shape as the live collector, so threads already expanded are not
+    repeated; already-expanded ones get the one-time "rescan" pass. Additive and idempotent.
+    """
+    from .sources.reddit_tasks import FAR_FUTURE, PRI_POSTS, PRI_THREAD
+
+    before = until_ts if until_ts else FAR_FUTURE
+    added = {"expansions": 0, "rescans": 0, "post_lookups": 0}
+    for t in db.conn.execute("SELECT thread_uid, expanded FROM threads WHERE relevant=1 AND thread_uid LIKE 'reddit:t3_%'").fetchall():
+        post_id = t["thread_uid"].split("t3_", 1)[1]
+        if not db.item_row(t["thread_uid"]) and db.add_task("reddit_posts", {"ids": [post_id], "discovered": False}, PRI_POSTS, "reddit_posts"):
+            added["post_lookups"] += 1
+        payload = {"post_id": post_id, "after": since_ts, "before": before, "page": 0}
+        if t["expanded"]:
+            if db.add_task("reddit_thread", {**payload, "rescan": True}, PRI_THREAD, "reddit_thread"):
+                added["rescans"] += 1
+        elif db.add_task("reddit_thread", payload, PRI_THREAD, "reddit_thread"):
+            added["expansions"] += 1
+    db.commit()
+    return added

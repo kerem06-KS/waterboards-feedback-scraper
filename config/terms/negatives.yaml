@@ -27,7 +27,7 @@ negatives:
     unless_context: ["@water_reg"]
   # news / outreach boilerplate: agency announcements are not user feedback about using a site
   - id: promo_boilerplate
-    pattern: '\b(click|tap) (here )?to (read|learn|see|view|find out)\b|\blearn more here\b|\bread more here\b|\b(making|makes|make) it (much |even )?(easier|simpler)\b|\bregister (now )?for (the |our )?(webinar|workshop|training|info session|information session)\b'
+    pattern: '\b(click|tap) (here )?to (read|learn|see|view|find out)\b|\blearn more here\b|\bread more here\b|\b(making|makes|make) it (much |even )?(easier|simpler)\b|\bregister (now )?for (the |our )?(webinar|workshop|training|info session|information session)\b|\bnow hiring\b|#nowhiring|\bwon''t want to miss\b|\bwishes? (you|all)\b|\bas you plan\b|\bwe wish all\b'
     penalty: 2
   # vendor / consultant marketing ("cloud-based CIWQS compliance solutions"): selling a service is not using a site
   - id: vendor_promo

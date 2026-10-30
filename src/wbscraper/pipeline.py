@@ -44,8 +44,8 @@ class Pipeline:
 
         text = self.redactor(text)
         thread_flag = self.db.thread_relevant(raw.thread_uid)
-        own = cap_tier(self.scorer.score(text, thread_relevant=False, hint=raw.score_hint, kind=raw.kind), raw.tier_cap)
-        final: Score = cap_tier(self.scorer.score(text, thread_relevant=True, hint=raw.score_hint, kind=raw.kind), raw.tier_cap) \
+        own = cap_tier(self.scorer.score(text, thread_relevant=False, hint=raw.score_hint, kind=raw.kind, allow_usage=raw.source != "github"), raw.tier_cap)
+        final: Score = cap_tier(self.scorer.score(text, thread_relevant=True, hint=raw.score_hint, kind=raw.kind, allow_usage=raw.source != "github"), raw.tier_cap) \
             if thread_flag else own
         self.stats.candidates += 1
 

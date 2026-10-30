@@ -128,8 +128,8 @@ def test_organisation_mention_needs_a_strong_experience_signal(scorer):
     assert scorer.score("The State Water Board website is confusing, I can't find the form").tier == "relevant"
 
 
-def test_named_system_next_to_neutral_wording_is_only_borderline(scorer):
-    s = scorer.score("I looked up my UST cleanup case on the GeoTracker website and the status was open")
+def test_named_system_mentioned_but_not_used_is_only_borderline(scorer):
+    s = scorer.score("GeoTracker lists the UST cleanup case T0600112233 with status open and a closure date pending")
     assert s.tier == "borderline"
 
 
@@ -344,7 +344,7 @@ def test_export_after_rescore_has_only_relevant_rows_and_review_file_has_borderl
     _seed_old_database(app)
     app.db.insert_item(uid="reddit:t3_b", source="reddit", kind="post", url="https://www.reddit.com/reddit:t3_b",
                        thread_uid="reddit:t3_b", parent_uid=None, community="Wastewater",
-                       text="I looked up my UST cleanup case on the GeoTracker website and the status was open", date=None, tier="relevant",
+                       text="GeoTracker lists the UST cleanup case T0600112233 with status open and a closure date pending", date=None, tier="relevant",
                        own_relevant=1, score=5, entity_hit=1, reasons="[]", text_hash=None, flags=None)
     app.db.commit()
     rescore_all(app.db, app.scorer, retired_queries=["WDID"])

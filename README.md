@@ -169,6 +169,12 @@ relevant by itself.
 (web articles and comment-letter PDF passages) are full of generic process words, so they need a genuine complaint
 (praise, "how do I" headings and "denied" do not count), and are never promoted by a shortcut. Beyond that:
 
+* **A person using a named system counts.** "Go to the GeoTracker map and click on your site", "I can log in to the
+  regulator portal for GeoTracker", "What trips people up about GeoTracker is…" are discussions of using a Water Boards
+  system even without a complaint. The rule is deliberately narrow: a system must be named (an ambiguous name such as
+  GeoTracker needs its cleanup/Water Boards context), and a use or interface word (*use the, look up, search, go to,
+  check out, can be found, upload, portal…*) must be in the **same sentence**, outside the system's own name. It
+  does not apply to authored documents, to GitHub project notes, or to a system that is merely cited.
 * A passing mention is not usage: "…the website. Groundwater moves extremely slow" does not qualify. A complaint must
   sit in the same sentence as the interface word it describes (or right across a sentence boundary, with a specific
   element such as *upload* or *login* rather than the bare word *website*). Weak wording (*great, confirm, helpful,

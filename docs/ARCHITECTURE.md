@@ -159,3 +159,8 @@ settings/term-library entries and a mocked test. The core (HTTP, queue, pipeline
 * **Crawl budget** (`waterboards_docs.max_pages` / `max_pdfs`): a page over the budget is deferred with an explanatory
   `last_error`, not marked done, so raising the budget and resuming continues the crawl. `docs_recovery.requeue_skipped_pages`
   (`wbscraper requeue-docs`) repairs data from older versions that marked such pages done without fetching them.
+* **Usage rule** (`RelevanceScorer._attached`): for person-voice items (not GitHub, not authored documents) a named system plus a
+  `usage_words` / firm interface word in the same sentence is relevant. `rescore --queue-followups`
+  (`rescore.queue_thread_followups`) queues the other comments of Reddit threads that are relevant now, using the live
+  collector's task shape, so replies in newly relevant threads are collected. Generic entity names ("Water Conservation
+  Portal", "Drinking Water Watch", "SAFER dashboard") need California / Water Boards context.

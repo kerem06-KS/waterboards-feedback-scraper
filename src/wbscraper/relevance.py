@@ -99,6 +99,7 @@ class RelevanceScorer:
         self._experience = lib.regexes.get("experience")
         self._experience_soft = lib.regexes.get("experience_soft")
         self._instructions = lib.regexes.get("instruction_steps")
+        self._usage_words = lib.regexes.get("usage_words")
         self._experience_help = lib.regexes.get("experience_help")
         self._experience_weak = lib.regexes.get("experience_weak")
         self._california = lib.regexes.get("california")
@@ -154,7 +155,8 @@ class RelevanceScorer:
     # -- Stage 2 ---------------------------------------------------------------------------------------------
     @staticmethod
     def _tier(conn: str, a: int, b: int, c: int, cs: int, thread_relevant: bool, a_firm: int | None = None,
-              near: bool = True, strict: bool = False, ch: int = 0, a_spec: int | None = None) -> tuple[str, bool]:
+              near: bool = True, strict: bool = False, ch: int = 0, a_spec: int | None = None,
+              attached: bool = False) -> tuple[str, bool]:
         """(tier, used_thread_exception). c = all experience wording, cs = the strong kind only. a_firm = interface
         words that are not also ordinary words (filter, button, outage ...); `near` = a strong experience word sits
         next to one of them; `strict` = an authored document rather than a person's post; ch = help-seeking phrases
@@ -166,7 +168,7 @@ class RelevanceScorer:
             if strict:
                 rel = cs >= 1 and (af >= 1 or b >= 1)
             else:
-                rel = cs + ch >= 1 and (a >= 1 or b >= 1)
+                rel = (cs + ch >= 1 and (a >= 1 or b >= 1)) or attached
             return ("relevant" if rel else "borderline" if (a or b or c) else "irrelevant"), False
         if conn == "implicit":
             return ("borderline" if (af >= 1 and cs >= 1) else "irrelevant"), False
@@ -193,10 +195,40 @@ class RelevanceScorer:
         return (any(abs(i - j) <= _NEAR_SAME for i in a_pos for j in c_pos if sid(i) == sid(j)) or
                 any(abs(i - j) <= _NEAR_ADJACENT for i in a_spec for j in c_pos))
 
+    def _system_spans(self, text: str) -> list[tuple[int, int]]:
+        low = text.lower()
+        spans: list[tuple[int, int]] = []
+        for e in self.lib.entities:
+            if e.kind != "system":
+                continue
+            level, matched = e.match(text, low)
+            if level in ("strong", "weak_ctx") and matched:
+                m = matched.lower()
+                i = low.find(m)
+                while i != -1:
+                    spans.append((i, i + len(m)))
+                    i = low.find(m, i + 1)
+        return spans
+
+    def _attached(self, text: str, firm: set[str]) -> bool:
+        """A named system and a use/interface word in the same sentence: someone using (or explaining) the system.
+        Words that are part of the system's own name ("Water Conservation Portal") do not count as its use."""
+        spans = self._system_spans(text)
+        if not spans:
+            return False
+        bounds = [m.end() for m in _SENTENCES.finditer(text)]
+        sid = lambda pos: sum(1 for b in bounds if b <= pos)
+        use_pos = [m.start() for m in self._usage_words.finditer(text)] if self._usage_words else []
+        use_pos += [m.start() for m in (self._usability.finditer(text) if self._usability else ())
+                    if m.group(0).lower() in firm]
+        use_pos = [u for u in use_pos if not any(a <= u < b for a, b in spans)]
+        return any(sid(i) == sid(j) and abs(i - j) <= _NEAR_SAME for i, _ in spans for j in use_pos)
+
     # -- scoring ---------------------------------------------------------------------------------------------
-    def score(self, text: str, thread_relevant: bool = False, hint: str = "", kind: str = "") -> Score:
+    def score(self, text: str, thread_relevant: bool = False, hint: str = "", kind: str = "", allow_usage: bool = True) -> Score:
         """`hint` is evidence that is not part of the stored text (a link post's URL, a Water Boards repository).
-        `kind` selects the strict gates for authored documents (articles, comment-letter passages)."""
+        `kind` selects the strict gates for authored documents (articles, comment-letter passages). `allow_usage=False`
+        turns off the "named system being used" rule (project repositories describe their own code, not use)."""
         strict = kind in STRICT_KINDS
         w = self.w
         text = text.replace("\u2019", "'").replace("\u2018", "'")      # curly apostrophes: matching only, stored text is untouched
@@ -236,7 +268,9 @@ class RelevanceScorer:
                 firm = sa - self._distinct(self._usability_ambiguous, usage)
                 spec = firm - self._distinct(self._usability_generic, usage)
                 near = self._near(usage, firm, spec)
-                tier, exc = self._tier(conn, a, b, c, cs, thread_relevant, len(firm), near, strict, len(sh) + walk, len(spec))
+                attached = allow_usage and not strict and conn == "system" and self._attached(usage, firm)
+                tier, exc = self._tier(conn, a, b, c, cs, thread_relevant, len(firm), near, strict, len(sh) + walk, len(spec),
+                                       attached)
                 key = (TIERS.index(tier), _RANK[conn], a + b + c)
                 if key > (TIERS.index(best[0]), _RANK[best[1]], best[3] + best[4] + best[5]):
                     best = (tier, conn, pts, a, b, c, exc, (sa, sb, sc))

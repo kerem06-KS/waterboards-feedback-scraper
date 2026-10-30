@@ -365,6 +365,49 @@ usability_generic:
   - online
   - internet
 
+usage_words:
+  # ("use" alone is too generic: "resources being used on sites")
+  # a person *using* (or telling someone how to use) a named system. Only counts in the same sentence as the system's
+  # name ("use GeoTracker", "look it up on GeoTracker", "all the info can be found on GeoTracker"), so the system must
+  # be the thing being used, not a name dropped somewhere in a long text.
+  - use the
+  - using the
+  - used the
+  - use a
+  - using a
+  - to use
+  - can use
+  - just use
+  - should use
+  - we use
+  - i use
+  - would use
+  - look up
+  - looking up
+  - looked up
+  - lookup
+  - search
+  - check out
+  - checking out
+  - checked out
+  - browse
+  - put the address
+  - type the address
+  - enter the address
+  - type in
+  - pull up
+  - head to
+  - go to
+  - can be found
+  - you can find
+  - you can see
+  - you can view
+  - learning
+  - learned
+  - amazing site
+  - great site
+  - best source
+
 experience_soft:
   # members of `experience` that are praise, questions or outcomes rather than complaints. Fine in a person's post,
   # but a web article or a letter passage needs a real complaint (marketing says "easy", headings ask "how do I").

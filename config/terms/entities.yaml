@@ -256,8 +256,10 @@ entities:
     kind: system
     short: Drinking Water Watch
     strong:
-      - Drinking Water Watch
       - sdwis.waterboards.ca.gov
+    weak:
+      # most US states run a "Drinking Water Watch": California must be named
+      - { term: Drinking Water Watch, context: ["california", "@waterboard_names", "ddw"] }
     anchors:
       1: [Drinking Water Watch, sdwis.waterboards.ca.gov]
       2: [Drinking Water Watch California, drinking water watch lookup]
@@ -375,10 +377,13 @@ entities:
     kind: system
     short: the Water Conservation Portal
     strong:
-      - Water Conservation Portal
       - SAFER Drinking Water Dashboard
-      - SAFER dashboard
       - Water Supplier Lookup Tool
+    weak:
+      # generic phrases: "water conservation portal" is also what utilities, vendors and articles call their own tools,
+      # and "safer dashboard" is a car interior
+      - { term: Water Conservation Portal, context: ["california", "@waterboard_names"] }
+      - { term: SAFER dashboard, case_sensitive: true, context: ["california", "drinking water", "@waterboard_names"] }
     anchors:
       1: [Water Conservation Portal, SAFER dashboard]
       2: [Monthly Conservation Reporting, Water Supplier Lookup Tool]

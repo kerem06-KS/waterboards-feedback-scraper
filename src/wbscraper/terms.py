@@ -159,7 +159,7 @@ class TermLibrary:
         lib.regexes["usability_ambiguous"] = phrase_regex(lib.signals.get("usability_ambiguous", []), inflect=True)
         lib.regexes["usability"] = phrase_regex(
             lib.signals.get("usability", []) + lib.signals.get("usability_ambiguous", []), inflect=True)
-        for name in ("process", "experience", "experience_soft", "instruction_steps", "experience_help", "experience_weak"):
+        for name in ("process", "experience", "experience_soft", "instruction_steps", "usage_words", "experience_help", "experience_weak"):
             lib.regexes[name] = phrase_regex(lib.signals.get(name, []), inflect=True)
         lib.regexes["california"] = lib.context_regex(["@california"])
         lib.regexes["ca_connection"] = lib.context_regex(["@california", "@waterboard_names"])
