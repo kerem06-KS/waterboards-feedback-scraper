@@ -7,8 +7,11 @@ solely because of earlier misclassifications are changed.
 from __future__ import annotations
 
 import json
+from urllib.parse import urlparse
 
-from .relevance import RelevanceScorer, cap_tier
+from .relevance import TIERS, RelevanceScorer, cap_tier
+from .sources.waterboards_docs import classify_document
+from .webclass import DEFAULT_REFERENCE, cap_for
 
 # Evidence the live pipeline passes to the scorer next to the text (RawItem.score_hint). The hint itself is never
 # stored, so it is rebuilt from the row where it can be (GitHub issues in the Water Boards' own organisation).
@@ -22,20 +25,64 @@ def score_hint(row) -> str:
     return ""
 
 
-def tier_cap(row) -> str:
-    return "borderline" if score_hint(row) else ""      # project repositories: review only, never exported
+def effective_kind(row) -> str:
+    """Rows stored before web articles got their own kind: a web "post" that is not a forum/Discourse post is an article."""
+    kind = row["kind"] or ""
+    if row["source"] == "web" and kind == "post" and not (row["uid"] or "").startswith(("web:wp:", "web:disc:")):
+        return "article"
+    return kind
 
 
-def rescore_all(db, scorer: RelevanceScorer, *, prune: bool = True, retired_queries: list[str] | None = None) -> dict:
+def letter_doc_caps(db) -> dict[str, str]:
+    """Re-classify every stored comment-letter PDF from its own passages (the live crawler applies the same rules to
+    new PDFs): an agency document (order, complaint, minutes ...) is not a public letter, an unclear one is review-only."""
+    docs: dict[str, list[tuple[int, str, str]]] = {}
+    for r in db.conn.execute("SELECT uid, url, text FROM items WHERE source='waterboards'"):
+        parts = (r["uid"] or "").split(":")                 # wb:<doc hash>:<page>:<index>
+        if len(parts) != 4:
+            continue
+        docs.setdefault(parts[1], []).append((int(parts[2]) * 1000 + int(parts[3]), r["url"].split("#")[0], r["text"]))
+    caps = {}
+    for h, passages in docs.items():
+        passages.sort()
+        kind = classify_document(passages[0][1], "\n\n".join(t for _, _, t in passages)[:60000])
+        caps[h] = {"letter": "", "agency": "irrelevant"}.get(kind, "borderline")
+    return caps
+
+
+def _stricter(*caps: str) -> str:
+    caps = [c for c in caps if c]
+    return min(caps, key=TIERS.index) if caps else ""
+
+
+def tier_cap(row, doc_caps: dict[str, str] | None = None, reference=DEFAULT_REFERENCE, official_extra=()) -> str:
+    cap = "borderline" if score_hint(row) else ""      # project repositories: review only, never exported
+    if row["source"] == "web":                          # agency / institutional pages and site checkers are not feedback
+        cap = _stricter(cap, cap_for(urlparse(row["url"] or "").hostname, reference, official_extra))
+    elif row["source"] == "waterboards" and doc_caps:
+        parts = (row["uid"] or "").split(":")
+        cap = _stricter(cap, doc_caps.get(parts[1], "") if len(parts) == 4 else "")
+    return cap
+
+
+def rescore_all(db, scorer: RelevanceScorer, *, prune: bool = True, retired_queries: list[str] | None = None,
+                web_cfg: dict | None = None) -> dict:
     before = db.tier_counts()
     db.clear_thread_relevance()
-    rows = db.conn.execute("SELECT uid, source, thread_uid, kind, community, text FROM items").fetchall()
+    rows = db.conn.execute("SELECT uid, source, thread_uid, kind, community, url, text FROM items").fetchall()
+    web_cfg = web_cfg or {}
+    doc_caps = letter_doc_caps(db)
+    reference = tuple(web_cfg.get("reference_domains") or DEFAULT_REFERENCE)
+    official_extra = tuple(web_cfg.get("official_domains") or ())
+
+    def cap_of(r):
+        return tier_cap(r, doc_caps, reference, official_extra)
 
     # pass 1: what is relevant on its own merits? Only those items may make their thread relevant.
     prev = {r["uid"]: r["tier"] for r in db.conn.execute("SELECT uid, tier FROM items")}
     results = {}
     for r in rows:
-        s = cap_tier(scorer.score(r["text"], thread_relevant=False, hint=score_hint(r)), tier_cap(r))
+        s = cap_tier(scorer.score(r["text"], thread_relevant=False, hint=score_hint(r), kind=effective_kind(r)), cap_of(r))
         results[r["uid"]] = s
         if s.relevant and r["thread_uid"]:
             db.upsert_thread(r["thread_uid"], r["source"] or "rescore", community=r["community"], relevant=True)
@@ -44,7 +91,7 @@ def rescore_all(db, scorer: RelevanceScorer, *, prune: bool = True, retired_quer
     own = {uid: s.relevant for uid, s in results.items()}
     for r in rows:
         if not own[r["uid"]] and db.thread_relevant(r["thread_uid"]):
-            results[r["uid"]] = cap_tier(scorer.score(r["text"], thread_relevant=True, hint=score_hint(r)), tier_cap(r))
+            results[r["uid"]] = cap_tier(scorer.score(r["text"], thread_relevant=True, hint=score_hint(r), kind=effective_kind(r)), cap_of(r))
     changed = 0
     for uid, s in results.items():
         db.update_item_score(uid, s.tier, int(own[uid]), s.total, int(s.entity_hit), json.dumps(s.reasons))

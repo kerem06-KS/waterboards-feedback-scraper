@@ -13,9 +13,16 @@ Stage 2 - usage: does it concern using a website, portal or digital process? Thr
     C  experience wording: strong (error, confusing, how do I, easy, ...) or weak (great, how to, does anyone, ...)
     Generic words alone ("system", "error", "account", "login") never qualify: they only matter next to Stage 1.
 
-        system connection   relevant: any C and (A or B)  |  two A                             borderline: any A, B or C
-        org / program       relevant: A and strong C                                  borderline: A  |  B and C
-        implicit (hint)     never relevant on its own                                 borderline: A and strong C
+        system connection   relevant: strong C (or a how-to request / interface walkthrough) with A or B
+                                                                                          borderline: any A, B or C
+        org / program       relevant: firm A next to a strong C                         borderline: A  |  B and C
+        implicit (hint)     never relevant on its own                                   borderline: firm A and strong C
+
+    "Firm" A words are not also ordinary words (filter, button, menu, layers, navigate ...; see `usability_ambiguous`).
+    Weak experience wording (great, how to, question, confirm ...) can support a borderline result but never makes
+    an item relevant by itself. Authored documents (web articles, PDF comment-letter passages: `strict`) contain
+    generic process words everywhere, so they need a strong experience word with interface or process wording for a
+    named system, and need a genuine complaint, not praise or a heading question (`experience_soft`).
 
 Locality: both stages are judged inside a window of three neighbouring sentences (short texts are one window), so
 a Water Boards mention in the first paragraph of a long post cannot borrow "website" from the last one. URLs are
@@ -75,6 +82,9 @@ _URL = re.compile(r"https?://\S+|www\.\S+", re.IGNORECASE)
 _SENTENCES = re.compile(r"(?<=[.!?])\s+|\n+")
 _SHORT_TEXT = 500                  # characters; shorter texts are judged as one window
 _RANK = {"none": 0, "implicit": 1, "program": 2, "org": 3, "system": 4}
+_NEAR_SAME = 200                   # an interface word and the complaint about it: within one sentence ...
+_NEAR_ADJACENT = 60                # ... or just across a sentence boundary
+STRICT_KINDS = frozenset({"article", "letter"})
 
 
 class RelevanceScorer:
@@ -84,8 +94,12 @@ class RelevanceScorer:
         self.w = {**DEFAULT_WEIGHTS, **(rel.get("weights") or {})}
         self._usability = lib.regexes.get("usability")
         self._usability_ambiguous = lib.regexes.get("usability_ambiguous")
+        self._usability_generic = lib.regexes.get("usability_generic")
         self._process = lib.regexes.get("process")
         self._experience = lib.regexes.get("experience")
+        self._experience_soft = lib.regexes.get("experience_soft")
+        self._instructions = lib.regexes.get("instruction_steps")
+        self._experience_help = lib.regexes.get("experience_help")
         self._experience_weak = lib.regexes.get("experience_weak")
         self._california = lib.regexes.get("california")
         self._ca_connection = lib.regexes.get("ca_connection")
@@ -139,28 +153,51 @@ class RelevanceScorer:
 
     # -- Stage 2 ---------------------------------------------------------------------------------------------
     @staticmethod
-    def _tier(conn: str, a: int, b: int, c: int, cs: int, thread_relevant: bool, a_firm: int | None = None) -> tuple[str, bool]:
+    def _tier(conn: str, a: int, b: int, c: int, cs: int, thread_relevant: bool, a_firm: int | None = None,
+              near: bool = True, strict: bool = False, ch: int = 0, a_spec: int | None = None) -> tuple[str, bool]:
         """(tier, used_thread_exception). c = all experience wording, cs = the strong kind only. a_firm = interface
-        words that are not also ordinary words (filter, button, outage ...); only those carry the thread exception."""
-        strong_use = a >= 1 and (b >= 1 or c >= 1 or a >= 2)
+        words that are not also ordinary words (filter, button, outage ...); `near` = a strong experience word sits
+        next to one of them; `strict` = an authored document rather than a person's post; ch = help-seeking phrases
+        ("how to", "does anyone know") or a walkthrough of the interface, which count as experience only next to a
+        named system. For strict kinds `cs` must already be limited to genuine complaints."""
+        af = a if a_firm is None else a_firm
+        asp = af if a_spec is None else a_spec          # interface elements (upload, login, portal) rather than "website"
         if conn == "system":
-            return ("relevant" if ((c >= 1 and (a >= 1 or b >= 1)) or a >= 2) else
-                    "borderline" if (a or b or c) else "irrelevant"), False
+            if strict:
+                rel = cs >= 1 and (af >= 1 or b >= 1)
+            else:
+                rel = cs + ch >= 1 and (a >= 1 or b >= 1)
+            return ("relevant" if rel else "borderline" if (a or b or c) else "irrelevant"), False
         if conn == "implicit":
-            return ("borderline" if (a >= 1 and cs >= 1) else "irrelevant"), False
+            return ("borderline" if (af >= 1 and cs >= 1) else "irrelevant"), False
         if conn in ("org", "program"):
-            return ("relevant" if (a >= 1 and cs >= 1) else
-                    "borderline" if (a or (b and c)) else "irrelevant"), False
-        if thread_relevant:
-            a = a if a_firm is None else a_firm
-            tier = "relevant" if ((a >= 1 and cs >= 1) or (a >= 1 and b >= 2) or a >= 2) else \
-                   ("borderline" if (a or (b and c)) else "irrelevant")
+            return ("relevant" if (af >= 1 and cs >= 1 and near) else
+                    "borderline" if (af or (b and c)) else "irrelevant"), False
+        if thread_relevant and not strict:
+            tier = "relevant" if ((af >= 1 and cs >= 1 and near) or (asp >= 1 and b >= 2) or asp >= 2) else \
+                   ("borderline" if (af or (b and c)) else "irrelevant")
             return tier, tier != "irrelevant"
         return "irrelevant", False
 
+    def _near(self, usage: str, firm: set[str], spec: set[str]) -> bool:
+        """A strong experience word that plausibly refers to a firm interface word: in the same sentence, or right
+        across a sentence boundary, where only a specific interface element counts (not "website"). "...a broken pipe.
+        They list it on their website" is not a complaint about the site."""
+        if not firm or self._usability is None or self._experience is None:
+            return False
+        bounds = [m.end() for m in _SENTENCES.finditer(usage)]
+        sid = lambda pos: sum(1 for b in bounds if b <= pos)
+        a_pos = [m.start() for m in self._usability.finditer(usage) if m.group(0).lower() in firm]
+        c_pos = [m.start() for m in self._experience.finditer(usage)]
+        a_spec = [m.start() for m in self._usability.finditer(usage) if m.group(0).lower() in spec]
+        return (any(abs(i - j) <= _NEAR_SAME for i in a_pos for j in c_pos if sid(i) == sid(j)) or
+                any(abs(i - j) <= _NEAR_ADJACENT for i in a_spec for j in c_pos))
+
     # -- scoring ---------------------------------------------------------------------------------------------
-    def score(self, text: str, thread_relevant: bool = False, hint: str = "") -> Score:
-        """`hint` is evidence that is not part of the stored text (a link post's URL, a Water Boards repository)."""
+    def score(self, text: str, thread_relevant: bool = False, hint: str = "", kind: str = "") -> Score:
+        """`hint` is evidence that is not part of the stored text (a link post's URL, a Water Boards repository).
+        `kind` selects the strict gates for authored documents (articles, comment-letter passages)."""
+        strict = kind in STRICT_KINDS
         w = self.w
         text = text.replace("\u2019", "'").replace("\u2018", "'")      # curly apostrophes: matching only, stored text is untouched
         hint = hint.replace("\u2019", "'") if hint else hint
@@ -191,11 +228,15 @@ class RelevanceScorer:
                 usage = _URL.sub(" ", win)
                 sa, sb, sc = (self._distinct(self._usability, usage), self._distinct(self._process, usage),
                               self._distinct(self._experience, usage))
-                cs = len(sc)
-                sc = sc | self._distinct(self._experience_weak, usage)
+                cs = len(sc - self._distinct(self._experience_soft, usage)) if strict else len(sc)
+                sh = self._distinct(self._experience_help, usage)
+                walk = len(self._distinct(self._instructions, usage)) >= 2
+                sc = sc | sh | self._distinct(self._experience_weak, usage)
                 a, b, c = len(sa), len(sb), len(sc)
-                a_firm = len(sa - self._distinct(self._usability_ambiguous, usage))
-                tier, exc = self._tier(conn, a, b, c, cs, thread_relevant, a_firm)
+                firm = sa - self._distinct(self._usability_ambiguous, usage)
+                spec = firm - self._distinct(self._usability_generic, usage)
+                near = self._near(usage, firm, spec)
+                tier, exc = self._tier(conn, a, b, c, cs, thread_relevant, len(firm), near, strict, len(sh) + walk, len(spec))
                 key = (TIERS.index(tier), _RANK[conn], a + b + c)
                 if key > (TIERS.index(best[0]), _RANK[best[1]], best[3] + best[4] + best[5]):
                     best = (tier, conn, pts, a, b, c, exc, (sa, sb, sc))
@@ -209,6 +250,8 @@ class RelevanceScorer:
         reasons.append("C=" + ",".join(sorted(words[2])))
         if exception:
             reasons.append("thread-exception")
+        if strict:
+            reasons.append(f"strict:{kind}")
 
         negative = 0.0
         for neg in self.lib.negatives:

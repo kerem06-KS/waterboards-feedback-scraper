@@ -52,9 +52,7 @@ usability:
   - site search
   - search function
   - search bar
-  - interface
   - user interface
-  - navigate
   - site navigation
   - navigation menu
   - user friendly
@@ -118,6 +116,8 @@ usability:
 # Water Boards connection, but never carry the thread exception on their own: a reply with no connection of its own
 # needs unambiguous digital vocabulary.
 usability_ambiguous:
+  - navigate
+  - interface
   - filter
   - layers
   - menu
@@ -183,8 +183,33 @@ experience:
   - failing
   - fails
   - failure
-  - slow
+  - slow to load
+  - slow loading
+  - loads slowly
+  - painfully slow
+  - so slow
+  - too slow
+  - website is slow
+  - site is slow
+  - portal is slow
+  - system is slow
+  - page is slow
+  - pages are slow
+  - is really slow
+  - is very slow
+  - super slow
+  - takes forever
   - freezes
+  - is down
+  - site is down
+  - website down
+  - system is down
+  - page not found
+  - 500 error
+  - server error
+  - outage
+  - under maintenance
+  - down for maintenance
   - frozen
   - can't log in
   - cannot log in
@@ -293,7 +318,17 @@ experience:
   - login issue
   - login issues
   - difficult
-  - hard to
+  - hard to use
+  - hard to find
+  - hard to navigate
+  - hard to understand
+  - hard to figure
+  - hard to log
+  - hard to access
+  - hard to submit
+  - hard to follow
+  - hard to read
+  - hard to search
   - outdated
   - archaic
   - tedious
@@ -320,7 +355,71 @@ experience:
 
 # Weaker wording: enough to qualify a *named system* next to interface/process vocabulary, but never an
 # organisation-only mention on its own.
+usability_generic:
+  # members of `usability` that name the medium rather than an interface element. Evidence next to a complaint in the
+  # same sentence, but a reply with no Water Boards connection of its own needs something more specific than "website".
+  - website
+  - web site
+  - webpage
+  - web page
+  - online
+  - internet
+
+experience_soft:
+  # members of `experience` that are praise, questions or outcomes rather than complaints. Fine in a person's post,
+  # but a web article or a letter passage needs a real complaint (marketing says "easy", headings ask "how do I").
+  - easy
+  - easier
+  - straightforward
+  - smooth
+  - intuitive
+  - works well
+  - how do i
+  - how can i
+  - anyone else
+  - is it just me
+  - denied
+  - rejected
+  - delayed
+  - still waiting
+  - no response
+  - never heard back
+  - never received
+  - not received
+
+instruction_steps:
+  # walking someone through an interface ("go to the map, open the list of layers, turn on ..."). Two different steps
+  # next to a named system count as usage evidence even without a complaint.
+  - go to the
+  - go to
+  - open up
+  - open the
+  - click on
+  - click the
+  - select the
+  - turn on
+  - scroll down
+  - type in
+  - type the
+  - you'll see
+  - you will see
+
+experience_help:
+  # requests for help with using a system. With a *named system* they are real usability evidence; next to the
+  # Boards in general ("does anyone know the number for the water board") they are not.
+  - how to
+  - has anyone
+  - does anyone
+  - anyone know
+  - anyone else
+  - is there a way
+  - any idea
+  - why is
+  - why does
+  - help with
+
 experience_weak:
+  # appraisals and filler: support a borderline result, never a relevant one on their own
   - great
   - love
   - worked
@@ -329,14 +428,6 @@ experience_weak:
   - responsive
   - helpful
   - improved
-  - how to
-  - has anyone
-  - does anyone
-  - anyone know
-  - is there a way
-  - any idea
-  - why is
-  - why does
-  - help with
   - question
   - confirm
+  - slow

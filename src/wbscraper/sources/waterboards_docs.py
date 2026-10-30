@@ -21,18 +21,35 @@ from pypdf import PdfReader
 from ..dates import to_iso
 from ..http import FetchError
 from ..robots import RobotsCache
-from .base import RawItem
+from .base import AllProvidersFailed, RawItem
 from .handler_base import ApiHandler
 
 _STRONG_AGENCY = re.compile(
     r"(response[s]? to (public )?comment|summary of (public )?comment|comment summary|staff report|fact sheet|"
-    r"board meeting agenda|minutes of|notice of (public|availability|opportunity|filing)|final statement of reasons|"
-    r"environmental impact report|substitute environmental document|draft order|proposed order)", re.I)
-_LETTER = re.compile(
+    r"board meeting agenda|\bagenda\b|minutes of|meeting minutes|advisory committee|notice of (public|availability|opportunity|filing|violation)|"
+    r"final statement of reasons|environmental impact report|substitute environmental document|draft order|proposed order|"
+    r"tentative (order|resolution)|stipulated order|administrative civil liability|cease and desist|settlement agreement|"
+    r"waste discharge requirements|monitoring and reporting program|\border no\.|\bresolution no\.)", re.I)
+# a person writing to the Board: a salutation or an explicit "comment letter" label (bare "re:" or "on behalf of"
+# appear in orders, complaints and minutes too)
+_SALUTATION = re.compile(
     r"(\bdear\s+(chair|chairman|chairwoman|chairperson|members?|board|ms\.?|mr\.?|mrs\.?|dr\.?|state|regional|"
-    r"executive|honorable|water|director|commissioners?)|\bsincerely\b|\brespectfully\b|\bon behalf of\b|"
-    r"\bthank you for the opportunity\b|\bwe appreciate the opportunity\b|\bcomment letter\b|\bre:)", re.I)
+    r"executive|honorable|water|director|commissioners?)|\bcomment letter\b|\bthank you for the opportunity\b|"
+    r"\bwe appreciate the opportunity\b)", re.I)
+_SIGNOFF_TAIL = re.compile(r"(sincerely|respectfully submitted|respectfully|very truly yours|yours truly)[,.]?\s", re.I)
+# a document that *starts* with the agency's own name is agency-authored (a public comment letter starts with its
+# writer's name and has the Board only in the address block)
+_AGENCY_LETTERHEAD = re.compile(
+    r"^\W*(california\s+)?(state\s+water\s+resources?\s+control\s+board|(\w+\s+){0,3}regional\s+water\s+quality\s+control\s+board|"
+    r"california\s+environmental\s+protection\s+agency|cal\s?epa|division\s+of\s+(water\s+rights|drinking\s+water|"
+    r"water\s+quality|financial\s+assistance))", re.I)
+_RE_LINE = re.compile(r"^\s*re:\s", re.I | re.M)
 _URL_LETTER = re.compile(r"(comment|letter|ltr|cl[_-]?\d)", re.I)
+# file names that are obviously the agency's own documents: skipped before downloading (saves the crawl budget)
+_AGENCY_NAME = re.compile(
+    r"(response[_ -]?to[_ -]?comment|summary[_ -]?of[_ -]?comment|comment[_ -]?summary|staff[_ -]?report|agenda|minutes|"
+    r"fact[_ -]?sheet|notice|transcript|presentation|slides|brochure|resolution|tentative|draft[_ -]?(policy|permit|plan|order)|"
+    r"\border\b|\brtc\b|fsor|\beir\b)", re.I)
 _DATE = re.compile(r"\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+"
                    r"\d{1,2},?\s+(19|20)\d{2}\b")
 _SIGNOFF = re.compile(r"\n\s*(sincerely|respectfully submitted|respectfully|regards|best regards|very truly yours|"
@@ -40,15 +57,29 @@ _SIGNOFF = re.compile(r"\n\s*(sincerely|respectfully submitted|respectfully|rega
 _SENT = re.compile(r"(?<=[.!?])\s+")
 
 
-def classify_document(url: str, head_text: str) -> str:
-    head = head_text[:3000]
-    if _STRONG_AGENCY.search(head_text[:600]) and not _LETTER.search(head_text[:600]):
+def skip_by_name(path: str, label: str = "") -> bool:
+    """True for PDFs whose file name says they are the agency's own document (and not a comment letter)."""
+    name = path.rsplit("/", 1)[-1]
+    if re.search(r"response[_ -]?to[_ -]?comment|summary[_ -]?of[_ -]?comment|comment[_ -]?summary", name, re.I):
+        return True
+    return bool(_AGENCY_NAME.search(name)) and not _URL_LETTER.search(name)
+
+
+def classify_document(url: str, text: str, hint: str = "") -> str:
+    """letter | agency | unknown. `hint` = "letter" when the page that linked the PDF is a comment-letter index."""
+    top, head, tail = text[:800], text[:3000], text[-1500:]
+    filename = urlparse(url).path.rsplit("/", 1)[-1]
+    if _AGENCY_LETTERHEAD.search(text[:120]):
         return "agency"
-    if _LETTER.search(head):
+    salutation = bool(_SALUTATION.search(text[:1500]))
+    signed = bool(_SIGNOFF_TAIL.search(tail))
+    if _STRONG_AGENCY.search(top) and not salutation:
+        return "agency"
+    if salutation or (signed and (_URL_LETTER.search(filename) or _RE_LINE.search(top))):
         return "letter"
     if _STRONG_AGENCY.search(head):
         return "agency"
-    if _URL_LETTER.search(urlparse(url).path.rsplit("/", 1)[-1]):
+    if _URL_LETTER.search(filename) or hint == "letter":
         return "letter"
     return "unknown"
 
@@ -126,8 +157,9 @@ class WaterBoardsDocsHandler(ApiHandler):
         if host not in self.hosts or not self.robots.allowed(url):
             self.db.add_url_seen(url, host, "wb"); self.db.bump_counter("wb_robots_or_host_blocked")
             return 0, None
-        if self._counter("wb_pages_fetched") >= self.max_pages:
-            return 0, None
+        if self._counter("wb_pages_fetched") >= self.max_pages:      # budget spent: wait, don't pretend the page was read
+            raise AllProvidersFailed([f"page budget reached (waterboards_docs.max_pages={self.max_pages}); raise it to continue"],
+                                     retry_at=self.db.clock() + 30 * 86400, counted=False)
         res = self.http.get(url, domain=host)
         self.db.bump_counter("wb_pages_fetched")
         ctype = res.headers.get("content-type", "")
@@ -135,6 +167,8 @@ class WaterBoardsDocsHandler(ApiHandler):
             self.db.add_task("wb_pdf", {"url": url}, 480, "waterboards_docs")
             return 0, None
         soup = BeautifulSoup(res.content, "html.parser")
+        page_title = soup.title.get_text(" ", strip=True).lower() if soup.title else ""
+        index_page = "comment" in urlparse(url).path.lower() or "comment" in page_title
         n_links = 0
         for a in soup.find_all("a", href=True):
             link = urldefrag(urljoin(res.url, a["href"].strip()))[0]
@@ -143,9 +177,16 @@ class WaterBoardsDocsHandler(ApiHandler):
                 continue
             label = (a.get_text(" ", strip=True) + " " + lp.path).lower()
             if lp.path.lower().endswith(".pdf"):
+                if skip_by_name(lp.path, label):
+                    if self.db.add_url_seen(link, lp.hostname, url):
+                        self.db.set_url_status(link, "skipped")
+                        self.db.bump_counter("wb_pdfs_skipped_by_name")
+                    continue
                 if self._counter("wb_pdfs_queued") < self.max_pdfs and self.db.add_url_seen(link, lp.hostname, url):
                     self.db.bump_counter("wb_pdfs_queued")
-                    self.db.add_task("wb_pdf", {"url": link}, 480, "waterboards_docs")
+                    letter_ctx = index_page or any(w in label for w in ("comment", "letter"))
+                    self.db.add_task("wb_pdf", {"url": link, **({"ctx": "letter"} if letter_ctx else {})}, 480,
+                                     "waterboards_docs")
                     n_links += 1
             elif depth < self.max_depth and any(w in label for w in self.follow_words) \
                     and not re.search(r"\.(jpe?g|png|gif|zip|docx?|xlsx?|pptx?)$", lp.path, re.I):
@@ -189,9 +230,11 @@ class WaterBoardsDocsHandler(ApiHandler):
         total_chars = sum(len(t.strip()) for t in texts)
         if total_chars < 80 * max(1, min(n_pages, 3)):
             self.db.bump_counter("wb_scanned_pdfs")     # no text layer: needs OCR (documented gap)
+            self.db.set_url_status(url, "scanned")
             return 1, None
         full = "\n\n".join(texts)
-        kind = classify_document(url, full)
+        kind = classify_document(url, full, p.get("ctx", ""))
+        self.db.set_url_status(url, kind)
         if kind != "letter":
             self.db.bump_counter("wb_agency_docs" if kind == "agency" else "wb_unclassified_docs")
             return 1, None

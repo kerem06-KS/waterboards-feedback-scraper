@@ -1,0 +1,392 @@
+[
+ {
+  "label": "genuine",
+  "uid": "reddit:t3_1sd9g15",
+  "source": "reddit",
+  "kind": "post",
+  "community": "Wastewater",
+  "url": "https://www.reddit.com/r/Wastewater/comments/1sd9g15/",
+  "thread_relevant": false,
+  "text": "California SWRCB\n\nI’m applying to take the wastewater exam in California and I have enough CEUs through Sacramento State. I just finished my last course today.\n\nI’m a little confused about the proof part. Can I just upload photos/scans of my course certificates, or do I need to buy the $8 CEU transcript from Sacramento State?\n\nIf I do need the transcript, does it have to be sent directly to SWRCB or can I upload a scanned copy myself?\n\nAny help is appreciated. Thanks!"
+ },
+ {
+  "label": "genuine",
+  "uid": "reddit:t1_oegxa86",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "Wastewater",
+  "url": "https://www.reddit.com/r/Wastewater/comments/1sd9g15/comment/oegxa86/",
+  "thread_relevant": true,
+  "text": "I’ve never had to send the course transcripts. I just sent the certificates of completion to prove you have enough CEUS and that was more than enough. Scan them then upload them and do the application online. Way better than snail mail."
+ },
+ {
+  "label": "genuine",
+  "uid": "reddit:t1_oegwhpw",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "Wastewater",
+  "url": "https://www.reddit.com/r/Wastewater/comments/1sd9g15/comment/oegwhpw/",
+  "thread_relevant": true,
+  "text": "OP, you'll need the official transcripts. Upload the pdf file you'll get once you pay the 8$.  Make sure to keep that file, that course work is valid for other test for 3 years!"
+ },
+ {
+  "label": "genuine",
+  "uid": "reddit:t3_1bujdgj",
+  "source": "reddit",
+  "kind": "post",
+  "community": "AskLosAngeles",
+  "url": "https://www.reddit.com/r/AskLosAngeles/comments/1bujdgj/",
+  "thread_relevant": false,
+  "text": "Where can I get my tap water tested for lead?\n\nI bought a house two years ago, recently I was reading the inspection report again for something else and noticed the warning that the pipes may have lead. I want to double check this just to be safe but the websites are so confusing, they take me all over the internet but nothing actually to test for lead. From [EPA.gov]( I went to [calwater.com]( then bnack to [EPA.gov]( and then [waterboards.ca.gov]( this is so confusing, can someone just link me where the hell I can send a sample for testing? Thank you"
+ },
+ {
+  "label": "genuine",
+  "uid": "reddit:t1_oovaqte",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "bayarea",
+  "url": "https://www.reddit.com/r/bayarea/comments/1trdka4/comment/oovaqte/",
+  "thread_relevant": false,
+  "text": "Specifically go to the map in GeoTracker, open up the list of layers under the the dropdown menu, go to filterable map coverages > site cleanup > turn on the \"superfund site boundary\" layer \nSource: environmental consultant"
+ },
+ {
+  "label": "genuine",
+  "uid": "gh:NewCaliforniaWaterAtlas/data-water-rights#1",
+  "source": "github",
+  "kind": "post",
+  "community": "NewCaliforniaWaterAtlas/data-water-rights",
+  "url": "https://github.com/NewCaliforniaWaterAtlas/data-water-rights/issues/1",
+  "thread_relevant": false,
+  "text": "What happened?\n\n[REDACTED_HANDLE] \nObviously, this project is not live here, but I love the idea. I am frustrated with the navigability of the eWRIMS database, especially the poor accessibility of Statements of Diversion and the bottleneck that the current user interface creates for efficient water availability analysis. \n\nI would love to understand what the challenges for this project were and whether it could be revived or launch a new project. eWRIMS is still a fairly broken system and needs a make-over. Is this a project still worth pursuing?"
+ },
+ {
+  "label": "genuine",
+  "uid": "gh:ucd-cws/dwrat-app#19",
+  "source": "github",
+  "kind": "post",
+  "community": "ucd-cws/dwrat-app",
+  "url": "https://github.com/ucd-cws/dwrat-app/issues/19",
+  "thread_relevant": false,
+  "text": "Issue with changed PoD service causing interface to fail\n\nThe web map fails to display the required information because the Point of Diversion layer from the SWRCB server no longer returns the same values it used to. I'm struggling to recall the exact issues, but from digging into the web application, it was expecting one format from the SWRCB server, but not getting that data (maybe a variable is missing, or isn't available via a query or something)"
+ },
+ {
+  "label": "genuine",
+  "uid": "web:db6ac73a53998ef3cdc4",
+  "source": "web",
+  "kind": "post",
+  "community": "allwaterrights.com",
+  "url": "https://allwaterrights.com/2026/04/07/calwatrs-improvement-or-just-change/",
+  "thread_relevant": false,
+  "text": "Challenges with CalWATRS: Improving on eWRIMS Performance\n\nHow is the Water Board’s CalWATRS database working out, and is it an improvement on eWRIMS? In summary, it’s changed, and so far the changes take more of our time to enter and review information. The Initial Statement to enter new water rights is working poorly.\n\nThe part of CalWATRS that works well is that there are a few really good folks that work with it, like Jeffrey Parks ([REDACTED_EMAIL]) and Carmen ([REDACTED_EMAIL]). They and a few others are the most positive aspect of CalWATRS, I think. Jeff and Carmen always get back to me quickly, sometimes the same day. Of course, they want you to initiate all new contacts with [REDACTED_EMAIL] and not bug people directly.\n\nThere was no pilot program with real water right holders before October 1, 2025. It would work much better if it had been tried out with 10 water right holders, including several who are not expert with the use of computers and have just one water right. That is a basic rule for any technology implementation – make it work for a few people first. The Water Board did not do that. Well, there is a possibility that some folks got to preview it, but none of what was learned was applied.\n\nInstead, we ALL got to suffer through it, try things, complain when it failed, and sometimes just wait some days or weeks until it was fixed. So many things were working poorly that I waited until December to start filing annual reports. Our rallying cry is “CalWATRS will work in 2027!” We can only hope.\n\nMy experience filing several hundred annual reports for Water Year 2025 is that it takes about 1-1/2 to 2 times as long to file as it did in eWRIMS. The wait between pages is longer for some of the pages, and there are more pages.\n\nWhen the form is ready to submit, there is a page to review your entered information. However, the page is mostly blank. Don’t worry – I have gone back and reviewed page by page the information, and all the information was\nusually\nthere.\n\nOnce your information is submitted, a PDF can be immediately downloaded, the same as with the old eWRIMS system. The PDFs seem to have all of the entered information. They are harder to read than the eWRIMS forms, and it takes longer to review the information. Next year…hopefully….\n\nThe Initial Statement submittal process is mostly\nnot\nworking:\n\nThere are no text boxes. There is not even a Supplementary Text Box at the end, somewhere before the signature, in which a user can enter text such as “\nPlease refer to attached map “Real Map Of All Features Of This Water Right.pdf\n” to see the true map of this water right, including all Places Of Use, Points Of Diversion, Ditches, Measurement Devices, Etc.”.\n\nNo existing maps can be uploaded and be visible in the Initial Statement.  Maps can only be in attached files.  When submitting paper Initial Statements before CalWATRS’s debut, maps were part of the submittal and were always visible when downloading the Initial Statement.  Existin"
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_kcf2rv6",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "Construction",
+  "url": "https://www.reddit.com/r/Construction/comments/x6v65n/comment/kcf2rv6/",
+  "thread_relevant": false,
+  "text": "Im in California too. Google SWRCB - it will bring you to the state water board website where they have all the testing info. Take and pass your D2 and T2 (skip the level 1 certs, test is just as easy as level 2) and once you have one of them you can start applying for water jobs. Its a great utility to get into."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_jpjs1ew",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "bayarea",
+  "url": "https://www.reddit.com/r/bayarea/comments/14ixz80/comment/jpjs1ew/",
+  "thread_relevant": false,
+  "text": "You can read the documentation about the investigations and remediation on the EPAs website or on the waterboards portal, GeoTracker.gov\n\nAs someone who designs remediation systems for these sites and has read a million case files I don't think corners are cut. The regulators are sticklers."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_cfwt38c",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "California",
+  "url": "https://www.reddit.com/r/California/comments/1zpxyn/comment/cfwt38c/",
+  "thread_relevant": false,
+  "text": "I work as a geologist for an environmental consulting firm. The state water board doesn't have the staff to really perform their mission, so the government contracts with private firms. While I work for a private company, I can log in to the regulator portal for geotracker, and my id on there shows up as \"USEPA\".\n\nI've spent the past year or so working on implementation of this policy and management of the state's open and stuck (i.e. no progress being made toward clean up/closure) UST cases."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_hzt8zpj",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "PlantedTank",
+  "url": "https://www.reddit.com/r/PlantedTank/comments/t92xra/comment/hzt8zpj/",
+  "thread_relevant": false,
+  "text": "I would reach out to the regional water quality board, I think you are in the Colorado region:  and explain your concerns about the tap water. Legally you are supposed to have clean water. I’m sure the water distributor would claim any issues aren’t on their part and are due to a broken pipe in the complex; the regional water board might be able to help you get your tap tested. They should have a public liaison listed on their website, or a general contact line. Even if you are drinking RO water, I would be worried about brushing my teeth with that water and (potentially) showering with water that has nitrates that high, who knows if you also bacteria or stuff that can affect your skin, especially with nitrates jumping that much recently."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_i28ie2d",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "LawSchool",
+  "url": "https://www.reddit.com/r/LawSchool/comments/to47n4/comment/i28ie2d/",
+  "thread_relevant": false,
+  "text": "Seconding regulatory work, California has a number of administrative / regulatory agencies that corporations and individuals alike need assistance navigating. If you can land something at a state regulatory agency in an externship, you should be in good shape to find a midsized firm. Being knowledgeable about the California Public Utilities Commission, CEQA (CalEPA/natural resources agency), water resources (SWRCB), etc should translate to a solid midsized firm offer based on what I’ve seen students from my law school do because those agencies are notoriously difficult to navigate without a regulatory Sherpa."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_kbvlquu",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "Lawyertalk",
+  "url": "https://www.reddit.com/r/Lawyertalk/comments/189ef7v/comment/kbvlquu/",
+  "thread_relevant": false,
+  "text": "I think there's a chance for sure - it really depends on which agency is hiring. I know people who have came from totally different areas in government/private as attorney 3 but it is hard to say. I'd check out the CalEPA website to see what agencies are under their umbrella, (I think it is mostly SWRCB, CARB and DTSC, at least I've seen them hiring) to get an idea of what they are looking for. They have litigation roles at those agencies to ones that are more focused on things like public records act and open meetings law."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_hia3717",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "California",
+  "url": "https://www.reddit.com/r/California/comments/qgwl5l/comment/hia3717/",
+  "thread_relevant": false,
+  "text": "&gt; But that isn't happening here. There are literally 0 wells affected, or at risk of being affected. The water board order is linked in the article and has the technical details.\n\nSo, I assume you mean, [this document]( The thing I would note here is that this document is from 2013. A lot can change in the time between then and now. And [the new, independent research]( should certainly be cause for alarm. While I can give you and others the benefit of the doubt for saying that more investigation is needed, but I think the trend is going to likely show that oil and gas companies should be doing more to clean up after themselves, especially so close to water and food production. There continues to be mounting evidence that fracking isn’t all it’s cracked up to be (at least when presented by oil and gas companies) and it’s something we really should be very skeptical of it.\n\nUnlike most people on the left, don’t necessarily think that an out right ban is necessarily the correct answer, but I think if something like this is to occur, then the regulatory oversight needs to be quite involved and the price of obtaining that oil had better be worth the price to clean up and deal with the environmental issues it causes. Because in many ways, if waste disposal was more expensive, we probably wouldn’t Need to ban fracking, because many companies with simply decide it’s not worth the time and hassle to do at this moment. Think about it this way: there are probably things you would like to do that or just simply too inconvenient or expensive for you to do all the time, so you tend to"
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_hnp6sj1",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "LosAngeles",
+  "url": "https://www.reddit.com/r/LosAngeles/comments/rbci3z/comment/hnp6sj1/",
+  "thread_relevant": false,
+  "text": "Time, ground water extraction, and soil excavation have resulted in soil test that confirm contamination is below a level of concern as established by regulatory authorities. Here is a [GeoTracker]( regarding the level of contamination and the case closed / no further action status.\n\nLess that 10% of potable water in Los Angeles County is from local ground water basins, as the county has widespread ground water contamination. I did not look up specifically if ground water in the Highland Park area is used as drinking water but knowing the surrounding area there is ground water contamination from WWII manufacturing.\n\nThe article needs more research, less bias, and less fear mongering."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_kza6lsp",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "Environmental_Careers",
+  "url": "https://www.reddit.com/r/Environmental_Careers/comments/1c29sp7/comment/kza6lsp/",
+  "thread_relevant": false,
+  "text": "Curious, is this the Chatham brothers barrel yard off gamble lane in Escondido? I used to work for a company that worked on that remediation site. That one has been in cleanup and monitoring for a long time\n\nAlso check out geotracker website to see most recent documentation like monitoring reports."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_kze5xuv",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "Environmental_Careers",
+  "url": "https://www.reddit.com/r/Environmental_Careers/comments/1c29sp7/comment/kze5xuv/",
+  "thread_relevant": false,
+  "text": "Disclaimer that I'm not from california, but I did a quick google search and this website looks promising:  I couldn't find a specific webpage about requesting testing, so you might have to call.\n\nyou could also find a local environmental consulting company that does soil testing and contract with them."
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_ja44zu1",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "WaterTreatment",
+  "url": "https://www.reddit.com/r/WaterTreatment/comments/vemmur/comment/ja44zu1/",
+  "thread_relevant": false,
+  "text": "I found it to be extremely helpful! The class can be a bit tedious, because it really covers everything. But if you print out all the paperwork and watch all the lectures, and do all the note cards you’ll pass easily. You gotta put in a lot of hours to get a good use of of it. I did my pass my T3! Another website I used which just has practice exams I did over and over. It was called waternuggets.com"
+ },
+ {
+  "label": "junk",
+  "uid": "reddit:t1_jpmdhu6",
+  "source": "reddit",
+  "kind": "comment",
+  "community": "bayarea",
+  "url": "https://www.reddit.com/r/bayarea/comments/14ixz80/comment/jpmdhu6/",
+  "thread_relevant": false,
+  "text": "There’s no risk to residents of that apartment building from the historic contamination. There is an elaborate vapor barrier and testing has been done to confirm that there are no vapors entering the parking garage (or the floors above). Source - I work on the regulatory side of projects like this. \n\nFor others interested, you can use the GeoTracker map to search for contaminated sites near you."
+ },
+ {
+  "label": "junk",
+  "uid": "gh:jphein/creek-watch#109",
+  "source": "github",
+  "kind": "post",
+  "community": "jphein/creek-watch",
+  "url": "https://github.com/jphein/creek-watch/pull/109",
+  "thread_relevant": false,
+  "text": "feat(data): all 9 stations of the 2024 Regional Board bacteria study (CEDEN)\n\n**WCCA feedback** (Kristen: \"a high priority question for people who want to swim or wade in the creek, or let their kids splash in it or dogs drink from it\"): the Regional Board's *Wolf Creek E. coli* web map shows **9** stations, but Creek Watch showed only the **2** at our sites. It's the **same study**: CEDEN project \"RWB5 Microbial Source Tracking Wolf Cr Study 2024\". Findings: `scratch/api/waterboards-bacteria.md` (on the team share).\n\n**Change (data only; no API or web change needed):**\n- `data/history.py`: `STUDY_ONLY_STATIONS` adds the other 7 stations (`site_id: null`, plus a `waterbody` label; 4 are tributaries). `get_bacteria_history('wolf')` returns all 9: our two sites first, then upstream → downstream. The existing dashboard past-study panel (`historyHTML`) already renders every station in `stations`, so they appear there with their sentence and chart.\n- `study.context_url`: the Board's own map, **as a link only**. Its CSV item is licensed *\"No part of this dataset may be reproduced … without the express written permission of the Central Valley Regional Water Quality Control Board SWAMP\"*, so every number comes from CEDEN (data.ca.gov). Rendering the link is for Luna's web PR.\n- The builder fetches all 9 codes, and `main()` takes an injectable fetch. The fixture was refreshed from CEDEN (234 rows = 9 × 13 E. coli + 13 TC). **The 2 existing stations are byte-identical to before.**\n- Rules unchanged: `is_current: false`; a geomean only counts with ≥ 5 samples; the state's 320/100 obje"
+ },
+ {
+  "label": "junk",
+  "uid": "gh:kylechoi101/surf-health#19",
+  "source": "github",
+  "kind": "post",
+  "community": "kylechoi101/surf-health",
+  "url": "https://github.com/kylechoi101/surf-health/pull/19",
+  "thread_relevant": false,
+  "text": "feat(data): additive live-BeachWatch source + daily wiring\n\nAdds the **live** BeachWatch database as a third, additive observations source and turns it on in the daily refresh.\n\n## Why\n\nThe data.ca.gov CKAN export everyone treats as \"the BeachWatch feed\" is a file dump and it is **frozen** — newest `SampleDate` is `2026-03-05`, ~5 months stale. The database behind it is current; the State Water Board's own Monitoring Data Search page iframes a live app at `beachwatch.waterboards.ca.gov/public/result.php` that queries it directly.\n\nEverything recent in `observations.parquet` has been coming from CEDEN alone, and nothing flagged that the other source flatlined.\n\nMeasured 2026-07-29, enterococcus:\n\n| county | live newest | ours | behind | July rows (live/ours) |\n|---|---|---|---|---|\n| Los Angeles | 2026-07-27 | 07-23 | 4d | 440 / 71 (**16%**) |\n| San Diego | 2026-07-26 | 07-20 | 6d | 511 / 100 (**20%**) |\n| Ventura | 2026-07-21 | 07-21 | 0d | 117 / 114 (97%) |\n\n## Additive, deliberately not a replacement\n\nStatewide the live app exposes 605 stations, of which **602 already match** `beaches.parquet.station_code` (3 new), while **247 of ours never appear in it**. For historical years our merged BeachWatch+CEDEN observations hold ~15% **more** rows (SD 2024: 8,154 vs 6,997). Switching wholesale would trade 247 stations and ~15% of training history for 3 stations.\n\nIts one real advantage is recency in the high-frequency counties — exactly where the serving anchor is stalest.\n\n## Why it matters for the model\n\nWithin-beach AUROC is **0.717 at lag 0–3d, 0.601 at 4–7d, and unmeasured "
+ },
+ {
+  "label": "junk",
+  "uid": "web:adbe71c0d72b59a92549",
+  "source": "web",
+  "kind": "post",
+  "community": "www.stormwater.pro",
+  "url": "https://www.stormwater.pro/annual-report-support",
+  "thread_relevant": false,
+  "text": "Stormwater Annual Report Support — Stormwater.Pro\n\nStormwater Annual Report Support\n\nDischargers are required to certify and submit an Annual Report\nno later than July 15 following each reporting year\nusing the standardized format via the Stormwater Multiple Application and Report Tracking System (SMARTS).\nStormwater.Pro is here to help complete your annual report with expert review and timely completion. Follow the easy steps below:\nComplete the form below with your facility information; and\nUpload your sampling/visual inspection and monthly inspection records.\nExperts at Stormwater.Pro will review your documents, provide an estimate and contact you for a quick report of facility conditions and address any questions you may have.\nStormwater.Pro will then complete your annual report in SMARTS and contact you for certification prior to the July 15 deadline. Feel free to use our\nAnnual Comprehensive Facility Compliance Evaluation (Annual Evaluation) Checklist\nto streamline the reporting process.\nIf you need more assistance, don’t hesitate to call us at [REDACTED_PHONE] or\n\nMESSAGE US\n\nAnnual Report File Review Form\n\nNeed Stormwater Help?\n\nCall us at\n[REDACTED_PHONE]\nor click the button below to schedule a FREE, no-obligation assessment from a Stormwater Pro.\n\nBOOK A MEETING\n\nMESSAGE US\n\nRELATED POSTS\n\nSummer Stormwater BMPs for Industrial Facilities\n\nTop summer stormwater BMPs for industrial facilities in California. Ensure compliance, prevent pollution, and protect your operations with expert tips.\n\nRead more →\n\n8 Key Steps for Developing Comprehensive Level 1 & 2 ERA Plans\n"
+ },
+ {
+  "label": "junk",
+  "uid": "web:ac02e17bf4aafb66ed1f",
+  "source": "web",
+  "kind": "post",
+  "community": "www.pinnacleems.com",
+  "url": "https://www.pinnacleems.com/ca-faq",
+  "thread_relevant": false,
+  "text": "California FAQ — Pinnacle EMS\n\nCalifornia’s UST Cleanup Fund\n\nWondering how to maximize your ability to receive reimbursement for eligible costs? Below are some of the frequently asked questions surrounding the California UST Cleanup Fund.\n\nUST Owners and Operators looking to mitigate the risk and financial impacts from a leaking underground storage tank have a viable and reliable financial responsibility mechanism in the California UST Cleanup Fund.\nThe Barry Keene Underground Storage Tank (UST) Cleanup Fund Act of 1989 was created by the California legislature and has reimbursed over a billion dollars in eligible cleanup costs, helping fuel retailers reduce the risk to business, incentivized compliance, provided guidance to assist with cost control, and ultimately protected the public from orphaned releases by efficient and proactive program administration.\n\nEligibility\n\nWho is eligible for the CA UST Cleanup Fund?\n\nThose who are eligible to seek reimbursement include any current (or prior) UST owners and operators who have had an unauthorized release of petroleum and were required to undertake corrective actions as directed by a regulatory agency. Even historic releases where cleanup has long been completed may be eligible for reimbursement, and if you’ve received a denial previously, there may still be options available to you.\n\nI have a release - how do I begin the process of filing for eligibility?\n\nEligibility is determined after a comprehensive review of a claimant’s compliance with applicable state UST permitting requirements, payment of UST storage fees, complianc"
+ },
+ {
+  "label": "junk",
+  "uid": "web:6925e1c6fdcd60544a83",
+  "source": "web",
+  "kind": "post",
+  "community": "grantedai.com",
+  "url": "https://grantedai.com/grants/underground-storage-tank-cleanup-fund-ustcf-california-state-water-resources-control-c653ad0f",
+  "thread_relevant": false,
+  "text": "How do I apply for Underground Storage Tank Cleanup Fund (USTCF)?"
+ },
+ {
+  "label": "junk",
+  "uid": "web:0c76e01153f13ce6ca19",
+  "source": "web",
+  "kind": "post",
+  "community": "www.enpdes.com",
+  "url": "https://www.enpdes.com/",
+  "thread_relevant": false,
+  "text": "eNPDES.com\n\nCloud-Based CIWQS Compliance Solutions\nUser-Friendly, Cost-Effective, and Secure\nPrepare and File your CWIQS eSMRs Anytime Anywhere\n\nWhat is eNPDES?\neNPDES is a fully integrated solution for compliance with\nboth\nCalifornia Water Boards CIWQS eSMR 2.0 & 2.5 NPDES reporting requirements. Our software is trusted by treatment plants across California to seamlessly help with state and federal reporting.\n\nView fullsize\n\nFeatures\nAutomated compliance checking with all permit limits, and software uses monitoring data to calculate averages, percentage removals, percentiles, and other statistical requirements.\nPopulates monitoring data onto the eSMR PET Tool Template.\nAccepts data from LIMS, and commercial laboratories.\nGenerates DMR forms and CSV Files (e.g., monthly, quarterly, semi-annual, and annual DMRs) for internal review(DMR) and upload(CVS) to CIWQS.\n24/7 technical support staff with over 25 years of experience managing and supporting the NPDES electronic reporting program.\n\nView fullsize\n\nPre-populated Permit Effluent Limits\n\nView fullsize\n\nGenerate CDF Report for upload to CIWQS\n\nView fullsize\n\nGenerate CIWQS eSMR 2.5 CVS File for submittal\n\nView fullsize\n\nAdvanced Data Query Tool\n\nView fullsize\n\nGenerate CIWQS PET Tool Template Report\n\nView fullsize\n\nGenerate Printable DMR Forms for Review\n\nView fullsize\n\nAnnual Permit Compliance Summary\n\nSome of our Partners\n\nCity of Atwater, Atwater Regional Wastewater Treatment Facility, Merced County ● City of Burlingame Wastewater Treatment Facility ● City of Millbrae Water Pollution Control Plant ● Delta Diablo Wastewate"
+ },
+ {
+  "label": "junk",
+  "uid": "web:329879e1ea3206c2d849",
+  "source": "web",
+  "kind": "post",
+  "community": "builtwith.com",
+  "url": "https://builtwith.com/calwatrs.waterboards.ca.gov/portal",
+  "thread_relevant": false,
+  "text": "calwatrs.waterboards.ca.gov/portal Technology Profile\n\nLog In\n·\nSignup for Free\n\nEN\n\nDE\n\nFR\n\nES\n\nIT\n\nРусский\n\n한국어\n\n日本語\n\n简体中文\n\nعربي"
+ },
+ {
+  "label": "junk",
+  "uid": "web:a674fd77a4765b425d83",
+  "source": "web",
+  "kind": "post",
+  "community": "downornot.net",
+  "url": "https://downornot.net/check/geotracker.waterboards.ca.gov",
+  "thread_relevant": false,
+  "text": "How do I check if geotracker.waterboards.ca.gov is down for everyone or just me?"
+ },
+ {
+  "label": "junk",
+  "uid": "web:bb7ba3a2e4363b3455d5",
+  "source": "web",
+  "kind": "post",
+  "community": "www.scamadviser.com",
+  "url": "https://www.scamadviser.com/check-website/mywaterquality.ca.gov",
+  "thread_relevant": false,
+  "text": "mywaterquality.ca.gov Reviews | scam, legit or safe check | Scamadviser\n\nReport a Scam\nScam IQ Test\nBusiness\nen\nDeutsch\nEnglish\nEspañol\nFrançais\nItaliano\n日本\nNederlands\nPortuguês\nRomanian\nRussian\n繁体中文\nUkrainian\n简体中文\nTry our App\nen\nDeutsch\nEnglish\nEspañol\nFrançais\nItaliano\n日本\nNederlands\nPortuguês\nRomanian\nRussian\n繁体中文\nUkrainian\n简体中文\nRegister | Login\nReport a Scam\nScam IQ Test\nBusiness\nTry our App\nVery Likely Safe\nCopied\nWhatsApp\n\nMessages\n\nCopy Link\nmywaterquality.ca.gov\nVISIT\nREPORT\nWhy does mywaterquality.ca.gov have an average to good trust score?\nScamAdviser\nTrust Score\n\n0\nLast Update:\n\n2 years ago\nExpert Analysis\nBusiness Verification\nWarning\nThis website hasn't been scanned in more than 30 days ago. Press the button to get a real time update.\nPositive Highlights\nWe found a valid SSL certificate\nThe site has been set-up several years ago\nDNSFilter\nlabels this site as safe\nNegative highlights\nThe identity of the owner of the website is hidden on WHOIS\nThe Tranco rank (how much traffic) is rather low\nAn iframe has been detected within the website\nIn summary, we think mywaterquality.ca.gov is legit and safe for consumers to access.\nYour Go-To Tools for Online Safety\nDisclaimer: Some of the links here are affiliate links. If you click them and make a purchase, we may earn a commission at no extra cost to you.\nScamAdviser App\n\n:\n\nThat site looks legit. That's exactly how they get you. Modern scams are frighteningly convincing. ScamAdviser scans sites and blocks fraud calls automatically. Free on iOS & Android.\nNordVPN\n\n:\n\nNordVPN delivers powerful, seamless protection for you"
+ },
+ {
+  "label": "junk",
+  "uid": "web:ded1c8166323a7e2f18b",
+  "source": "web",
+  "kind": "post",
+  "community": "data.ca.gov",
+  "url": "https://data.ca.gov/topics/water/water-quality",
+  "thread_relevant": false,
+  "text": "Water Quality · Water – Data.CA.gov\n\nWater Quality\n93\ndatasets\nDrinking water testing, contamination monitoring, and treatment plant data.\nWater Quality datasets\nShowing 1–5 of 93 datasets\nCalifornia State Water Resources Control Board\nGround Water - Water Quality Results\nGroundwater quality data and related groundwater well information available on the page was queried from the GAMA Groundwater information system (**[GAMA GIS](https://gamagroundwater.waterboards.ca.gov/gama/datadownload)**). Data provided represent a collection of groundwater quality results from various federal, state, and local groundwater sources. Results have been filtered to only represent untreated sampling results for the purpose of characterizing ambient conditions.\n\nData have been standardized across multiple data sets including chemical names and units. Standardization has not been performed for chemical result modifier and others (although we are working currently to standardize most fields). Chemicals that have been standardized are included in the data sets. Therefore, other chemicals have been analyzed for but are not included in GAMA downloads. Groundwater samples have been collected from well types including domestic, irrigation, monitoring, municipal. Wells that cannot accurately be attributed to a category are labeled as \"water supply, other\".\n\nFor additional information regarding the GAMA GIS data system please reference our **[factsheet](https://www.waterboards.ca.gov/publications_forms/publications/factsheets/docs/gama_gis_factsheet.pdf)**.\n\nexcel (xlsx)\nCSV\n#\nSWRCB\n•\n#\nWater Supply\n•\n"
+ },
+ {
+  "label": "junk",
+  "uid": "web:0683401aa705fb436ff0",
+  "source": "web",
+  "kind": "post",
+  "community": "content.govdelivery.com",
+  "url": "https://content.govdelivery.com/accounts/CAWRCB/bulletins/3e7ccaf",
+  "thread_relevant": false,
+  "text": "Important Update: OCIS Online Portal - Changes to Login Coming July 9th!\n\nCalifornia Water Boards sent this bulletin at 07/02/2025 03:21 PM PDT\n\nHaving trouble viewing this?\nView it as a webpage\n\nTo All Interested Parties:\n\nIf you have an OCIS account (\nOperator Certification Information System\n), this change will affect you beginning\nJuly 9\nth\n.\n\nPlease see below for details on how to continue as an OCIS portal account user.\n\nWhat’s changing?\n\nWater Boards Office of Operator Certification needs to let you know about an important change to the OCIS application that will take effect\nstarting on Wednesday, July 9th\n. When you log into OCIS on or after July 9th, you will notice that it will look different.\nIn order to continue using OCIS, you will need to\nre-register\n.\n\nWhy the change?\n\nThe reason for the change is because of the requirement by our ISO (Information Security Officer) for OCIS users to provide two-factor authentication when accessing the application. (All applications hosted by the Water Board will be moving to two-factor authentication.) To effectuate two-factor authentication, our IT department has developed\nWBKey\nwhich is a new single sign-on platform that allows you to access multiple Water Boards applications with just one account.\nWhile the look and feel to log in will be different, the OCIS portal functionality has not changed and remains the same\n.\n\nFor more information about WBKey, review the public website here:\nhttps://www2.waterboards.ca.gov/wbkey\n.\n\nFor any WBKey-related issues, you may email\n[REDACTED_EMAIL]\n(for the drinking water program portal) "
+ },
+ {
+  "label": "junk",
+  "uid": "web:241c042aba130c683394",
+  "source": "web",
+  "kind": "post",
+  "community": "content.govdelivery.com",
+  "url": "https://content.govdelivery.com/accounts/CAWRCB/bulletins/3c9e22c",
+  "thread_relevant": false,
+  "text": "NEW Online Application Now Available\n\nCalifornia Water Boards sent this bulletin at 12/30/2024 08:13 AM PST\n\nHaving trouble viewing this?\nView it as a webpage\n\nTo All Interested Parties:\n\nGrade 4 examination applications are now available for electronic submittal through our online Operator Certification Information System (OCIS) portal. Please visit this link to create or access your OCIS account:\nOperator Certification Information System\n.\n\nIf you do not already have an OCIS account you will need to click on \"create an account here\" to create one. Please register your account using the email address we currently have on file from previous applications. If you already have an OCIS account, use your current login information.\n\nThrough your OCIS account you have the ability to:\n\nSubmit examination applications for Grades 1-4\n\nUpdate your contact information\n\nCheck the status of ALL applications\n\nOffice of Operator Certification Website\n\nUpdate your subscriptions, modify your password or email address, or stop subscriptions at any time on your\nSubscriber Preferences Page\n.\n\nYou will need to use your email address to log in. If you have questions or problems with the subscription service, please visit\nsubscriberhelp.govdelivery.com\n.\n\nThis service provided to you at no charge by the\nCalifornia Water Boards\n."
+ },
+ {
+  "label": "junk",
+  "uid": "web:f8bcec89f0b0d6d4da47",
+  "source": "web",
+  "kind": "post",
+  "community": "content.govdelivery.com",
+  "url": "https://content.govdelivery.com/accounts/CAWRCB/bulletins/414ebb0",
+  "thread_relevant": false,
+  "text": "CEDEN Website - updated URL\n\nCalifornia Water Boards sent this bulletin at 05/11/2026 09:25 AM PDT\n\nHaving trouble viewing this?\nView it as a webpage\n\nThe CEDEN website has a new look and a new URL!\n\nFor Laboratories who upload data to CEDEN, please read the information provided by the California Environmental Data Exchange Network team:\n\nThe CEDEN website has a new look and new URL!\n\nhttps://ceden.waterboards.ca.gov/\n\nUpdate your bookmarks and check out the new site.\n\nAccess CEDEN data\n\nCEDEN data submission\n\nThe\nCEDEN Data Checker\nwas also updated!\n\nCEDEN 2.0\nhas a new page for updates\n\nQuestions or comments:\n[REDACTED_EMAIL]\n\nUpdate your subscriptions, modify your password or email address, or stop subscriptions at any time on your\nSubscriber Preferences Page\n.\n\nYou will need to use your email address to log in. If you have questions or problems with the subscription service, please visit\nsubscriberhelp.govdelivery.com\n.\n\nThis service provided to you at no charge by the\nCalifornia Water Boards\n."
+ },
+ {
+  "label": "junk",
+  "uid": "web:01947b37bb8cebd08641",
+  "source": "web",
+  "kind": "post",
+  "community": "content.govdelivery.com",
+  "url": "https://content.govdelivery.com/accounts/CAWRCB/bulletins/3f51315",
+  "thread_relevant": false,
+  "text": "Important Updates: CalWATRS Launches October 7, 2025\n\nCalifornia Water Boards sent this bulletin at 09/30/2025 10:40 AM PDT\n\nHaving trouble viewing this?\nView it as a webpage\n\nThe State Water Resources Control Board is launching the California Water Accounting, Tracking, and Reporting System (CalWATRS) on October 7, 2025. A link to the new system and additional information will be posted on the\nCalWATRS webpage\non October 7\nth\n.\n\nWhat You Need to Know\n\nYou Can Create an Account on October 7\nt\nh\nYou’ll be able to create a CalWATRS account as soon as it opens, but you won’t be able to begin reporting until you receive a personal identification number (PIN) from the State Water Board.\n\nPINs Will Be Mailed in Mid-October\nThe State Water Board will begin mailing PINs in mid-October. If you manage multiple water rights, you may receive multiple PINs.\n\neWRIMS Usernames and Passwords Don’t Work for CalWATRS\nCalWATRS accounts require a new username and password. Your eWRIMS usernames and passwords will not work in CalWATRS.\n\nLarge & Complex Water Rights\nIf you manage a large or complex portfolio of water rights, please email\n\n[REDACTED_EMAIL]\nbefore creating your CalWATRS account. We will work with you directly to ensure your account is set up correctly.\n\nPublic Outreach\nThe State Water Board is planning a series of public events to help users navigate CalWATRS. It all kicks off with an Informational Item at the Board’s public meeting on October 7\nth\n. Upcoming events will be posted on the\nCalWATRS webpage\nas they are scheduled.\n\nIf you have questions or would like the CalWATRS team"
+ },
+ {
+  "label": "junk",
+  "uid": "web:57d7cedc1f3d8aee707b",
+  "source": "web",
+  "kind": "post",
+  "community": "www.ibm.com",
+  "url": "https://www.ibm.com/support/pages/configuring-large-leak-detection-capability-water-conservation-portal",
+  "thread_relevant": false,
+  "text": "Configuring the large leak detection capability in the Water Conservation Portal\n\nQuestion & Answer\n\nQuestion\n\nHow do I configure the large leak detection capability?\n\nAnswer\n\nThe leak detection capability is provided by the Water Conservation Portal. When a potential leak is detected, a leak alert is reported and an email alert is generated. You can configure properties for the leak detection metric in the Water Conservation Portal property file.\n\nIn IBM Intelligent Operations for Water V1.6.1.2, the leak detection capability has been extended to also detect large leaks. You can define a threshold for large leaks by adding an optional property to the Leak metric configuration in the Water Conservation Portal property file. The Water Conservation Portal analysis tool detects a large leak if the minimum water consumption that is recorded by a meter in the previous 24 hours is greater than the defined threshold.\n\nComplete the following steps to configure large leak detection:\n\nLog on to IBM Intelligent Operations for Water as a water conservation portal user (<solutionID>Citizen).\n\nIn the Solution Administration view, click\nConfiguration Tools > Application Configuration\n, and select a solution application to configure.\n\nOn the\nWCP Configuration\ntab, click the\nProperty file\ntab.\n\nTo define a large leak threshold, add the\nLeak.LARGE_LEAK_THRESHOLD\nproperty to the configuration for the Leak metric, as shown in the following example:\n\n##########################################\n\n### Leak ###\n\n##########################################\n\nLeak.IMPLEMENTATION=com.ibm.water.wcp.analys"
+ },
+ {
+  "label": "junk",
+  "uid": "web:6d514091c8547afa589a",
+  "source": "web",
+  "kind": "post",
+  "community": "cdtfa.ca.gov",
+  "url": "https://cdtfa.ca.gov/taxes-and-fees/fuel-tax-and-fee-guides/underground-storage-tank-maintenance-fee/",
+  "thread_relevant": false,
+  "text": "Underground Storage Tank Maintenance Fee\n\nOverview\n\nHelping your business succeed is important to the California Department of Tax and Fee Administration (CDTFA). The fees you collect and pay to the state help fund state and local services and programs that are important to you and your community.\n\nUnderstanding the fee issues and registration requirements specific to the underground storage tank maintenance fee program can be time-consuming and complicated. It is important that you get the information you need in a timely and understandable way, which will help you focus on starting and growing your business.\n\nThis guide is provided to help you better understand the underground storage tank maintenance fee.\n\nWhat is the Fee\n\nThe CDTFA, in cooperation with the\nState Water Resources Control Board\nadministers this program to provide revenue for the Underground Storage Tank Cleanup Fund in the General Fund. The fee is collected from the owner of an underground storage tank based on the number of gallons of petroleum placed in the tank during the reporting period.\n\nHow the Revenue is Used\n\nThe underground storage tank maintenance fee is used to provide revenue for the Underground Storage Tank Cleanup Fund in the General Fund. The primary purpose of the fund is to provide financial assistance to the owners and operators of underground storage tanks to remediate conditions caused by leaks, reimburse for third party damage and liability, and assist in meeting federal financial responsibility requirements.\n\nHow to Use This Guide\n\nEach section of this guide contains important inform"
+ },
+ {
+  "label": "junk",
+  "uid": "web:97a5718caac637034cfb",
+  "source": "web",
+  "kind": "post",
+  "community": "nelac-institute.org",
+  "url": "https://nelac-institute.org/committee/nelap",
+  "thread_relevant": false,
+  "text": "The NELAC Institute (TNI)\n\nThe NELAC Institute\n\n≡\n\nTNI\n\nConsensus Standards\n\nDevelopment\n\nLaboratory\n\nAccreditation\n\nProficiency Testing\n\n(PT)\n\nField Activities\n\n(NEFAP)\n\nProfessional\n\nDevelopment\n\nTraining & Meetings\n\nMembership\n\nJoin TNI\n\nTNI Member Benefits\n\nTNI Member Directory\n(TNI Members Only)\n\nOrganization\n\nOrganization Chart\n\nList of All TNI Committees\n\nCommittee Meeting Schedule\n\nJoin a TNI Committee\n\nTNI Documents\n\nPolicies & Standard Operating Procedures\n\nDocument Library\n\nNews Archives\n\nNewsletter Archives\n\nBylaws\n\nAcronyms and Definitions\n\nLogos & Symbols\n\nAdministrative Committees\n\nCredentials Committee\n\nFinance Committee\n\nNominating Committee\n\nPolicy Committee\n\nTraining Committee\n\nAdvocacy\n\nAdvocacy Committee\n\nMentor Subcommittee\n\nAdvocacy Documents\n\nArticles\n•\nCorrespondence\n•\nWhite Papers\n•\nPosition Statements\n•\nPress Releases\n•\nRegulatory Comments\n•\nReports\n\nTNI Resources\n\nAvailable Training Courses\n\nBuy TNI Standards, Templates, and Guides\n\nManagement & Oversight\n\nExecutive Director & Staff\n\nBoard of Directors\n\nConsumables Task Force\n\nAbout TNI\n\nThe NELAC Institute (TNI) is a 501(c)(3) non-profit organization whose mission is to foster\nthe generation of environmental data of known and documented quality through an open, inclusive, and transparent process that is responsive to the needs of the community. The organization is managed by a Board of Directors and is governed by organizational Bylaws.\n\nLearn more...\n\nContact TNI\n\nSubmit a question or comment\n\nSubmit a complaint\n\nTNI Staff Contact Information\n\nStandards\n\nLaboratory Accreditation (TNI 2016) Stan"
+ },
+ {
+  "label": "junk",
+  "uid": "web:ce790d5c13e60d55c49f",
+  "source": "web",
+  "kind": "post",
+  "community": "www.cde.ca.gov",
+  "url": "https://www.cde.ca.gov/fg/fo/r27/cclcassets24faast.asp",
+  "thread_relevant": false,
+  "text": "Instructions for the FAAST Application (CA Dept of Education)\n\nSkip to main content\n\nHome\n\nFinance & Grants\n\nFunding\n\nInstructions for the FAAST Application\n\nInstructions for using the Financial Assistance Application Submittal Tool (FAAST).\n\nThe 21\nst\nCentury Community Learning Centers (CCLC) and After School Safety and Enrichment for Teens (ASSETs) application narratives must be submitted online. Please visit the\nState Water Resources Control Board\n\nweb page\non or before Thursday, November 16, 2023, by 4 p.m. Narratives cannot be uploaded after the deadline as the system will no longer be available. Lack of internet access or a loss of connection while submitting an application narrative will not be considered as a viable reason for missing the application deadline and may not be appealed.\n\nQuestions and/or technical assistance about the Financial Assistance Application Submittal Tool (FAAST) system can be directed to the State Water Resources Control Board staff by phone at [REDACTED_PHONE], Monday through Friday from 8 a.m. to 5 p.m., or by email at\n[REDACTED_EMAIL]\n.\nThe California Department of Education (CDE) cannot provide technical assistance for how FAAST operates.\n\nFinancial Assistance Application Submittal Tool Instructions\n\nThe CDE will not add, delete, or replace items from the application once it has been submitted. If any subsequent changes to an application need to be made, the applicant must contact the FAAST administrators to modify their application\nprior to the submission deadline.\n\nOnly online FAAST application narratives will be accepted and only one "
+ },
+ {
+  "label": "junk",
+  "uid": "web:431adc8f05ce83aaae60",
+  "source": "web",
+  "kind": "post",
+  "community": "www.waterboards.ca.gov",
+  "url": "https://www.waterboards.ca.gov/drinking_water/programs/",
+  "thread_relevant": false,
+  "text": "Drinking Water Program | California State Water Resources Control Board\n\nDrinking Water Program\n\nThe Division of Drinking Water (DDW) regulates public drinking water systems.\n\nNews\n\nField Operations Branch\n\nProgram Management Branch\n\nResiliency and Data Branch\n\nElectronic Reporting of Drinking Water Quality Data emergency regulatory action approved and in effect\n(July 13, 2026)\n\nDivision of Drinking Water\nrequests OEHAA establish a manganese public health goal\n(June 2, 2026)\n\nDivision of Drinking Water issued\nrevised notification and response levels for manganese\n(June 2, 2026)\n\nOnsite Treatment and Reuse of Nonpotable Water regulations approved and in effect\n(April 22, 2026)\n\nCross-Connection Control Policy Handbook revisions adopted and in effect\n(April 21, 2026)\n\n2026 Division of Drinking Water Regulatory Priorities adopted\n(March 3, 2026)\n\nClick the link for\nField Operations Branches map and contact information\n(PDF).\n\nThe Field Operations Branches (FOB) are responsible for enforcing the federal and California Safe Drinking Water Acts (SDWAs) and overseeing about 7,500\npublic water systems\n. Their goal is to ensure that all Californians have access safe drinking water. FOB staff perform various task such as conducting field inspections, issue operating\npermits\n, reviewing plans for new facilities, taking enforcement actions for non-compliance, reviewing water quality data, and supporting\nwater system security\n. They are also involved in funding infrastructure improvements, conducting\nsource water assessments\n, evaluating projects that use recycled treated wastewater, an"
+ }
+]

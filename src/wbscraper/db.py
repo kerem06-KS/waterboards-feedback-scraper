@@ -300,6 +300,9 @@ class Database:
             (url, domain, query, self.clock()))
         return cur.rowcount > 0
 
+    def set_url_status(self, url: str, status: str) -> None:
+        self.conn.execute("UPDATE urls_seen SET status=? WHERE url=?", (status, url))
+
     def urls_seen_count(self) -> int:
         return self.conn.execute("SELECT COUNT(*) FROM urls_seen").fetchone()[0]
 

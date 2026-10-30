@@ -69,7 +69,8 @@ wbscraper run
 | `wbscraper report` | Coverage report: which providers worked, failed, were restricted, unique threads per method. |
 | `wbscraper sources` | List the source adapters and whether each is active. |
 | `wbscraper terms` | Preview the generated search queries offline (`--dump plan.tsv` writes them all). |
-| `wbscraper rescore` | Re-apply the relevance rules to everything already collected (no network): reclassifies, cancels pending work that only existed because of earlier misclassifications, and regenerates both CSVs. Never deletes collected rows or resets finished tasks. |
+| `wbscraper requeue-docs` | Queue second-pass tasks for Water Boards pages that an older version marked done without fetching (page budget). Additive and idempotent; `--dry-run` only counts them. |
+| `wbscraper rescore` | Re-apply the relevance rules to everything already collected (no network): reclassifies, cancels pending work that only existed because of earlier misclassifications, and regenerates both CSVs. Never deletes collected rows or resets finished tasks. `--keep-pending` also leaves every pending task alone. |
 | `wbscraper check` | One small request per provider to confirm connectivity. |
 | `pytest` | Run the test suite (fully mocked; never touches the network). |
 
@@ -164,6 +165,22 @@ thread about refrigerator water filters cannot qualify on "the filter fails".
 Context that is only implied (a link to the site, a Water Boards GitHub repository) can never make an item
 relevant by itself.
 
+**What kind of item it is matters.** A person's post or comment is judged on its wording (above). Authored documents
+(web articles and comment-letter PDF passages) are full of generic process words, so they need a genuine complaint
+(praise, "how do I" headings and "denied" do not count), and are never promoted by a shortcut. Beyond that:
+
+* A passing mention is not usage: "…the website. Groundwater moves extremely slow" does not qualify. A complaint must
+  sit in the same sentence as the interface word it describes (or right across a sentence boundary, with a specific
+  element such as *upload* or *login* rather than the bare word *website*). Weak wording (*great, confirm, helpful,
+  question*) never makes an item relevant. Requests for help (*how to, does anyone know*) and short walkthroughs
+  (*go to the map, click on…*) count when a named system is involved.
+* Pages from agency or institutional sites (`*.gov`, `*.edu`, `govdelivery.com`) are announcements, not feedback: at most
+  borderline. Site checkers, technology profilers, dictionaries and vendor manuals are never relevant and not fetched
+  (`web_pages.reference_domains` / `official_domains` in `config/sources/forums.yaml`).
+* Vendor marketing ("request a demo", "cloud-based solution") and code-change titles (`feat(data): …`) are rejected.
+* A PDF is a public comment letter only if it has a salutation or sign-off and does not start with the agency's own
+  name; orders, complaints, minutes and the Board's own transmittals are agency documents.
+
 * **relevant** items are exported to `waterboards_feedback.csv` (exactly `text,date,source_url`);
 * **borderline** items (a connection but thin or neutral usage evidence) are stored and written to a separate
   `borderline_review.csv` for manual review (it adds a `review_note` column, so it is *not* the deliverable);
@@ -234,7 +251,13 @@ wbscraper run --enable youtube      # in addition to the default sources
   Bluesky and Mastodon post URLs necessarily contain a DID / account name, because that is how those platforms
   address posts; no other account information is stored. The tool never claims complete coverage of the
   internet — use `wbscraper report` to see what was actually reached.
-* Expect hundreds to low thousands of relevant items, not millions: these are niche systems.
+* **Expect tens, not thousands.** Measured on a real collection (15,700 stored items from 11 sources), only about 340 items
+  named a specific Water Boards system and about 15 were genuine usability feedback once agency pages, vendor
+  marketing, passing mentions and agency documents were excluded. These are niche systems used mostly by professionals
+  (operators, consultants, dischargers) who discuss them in members-only venues. `wbscraper report` has a *Funnel*
+  table showing, per source, where volume turns into (or fails to become) usable feedback. More yield comes from
+  finishing the queue, the Water Boards comment-letter crawl (`wbscraper requeue-docs`), and optional credentials
+  (YouTube key, `GITHUB_TOKEN`), not from loosening the filter.
 
 ## Troubleshooting
 

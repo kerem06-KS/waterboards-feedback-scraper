@@ -21,6 +21,7 @@ from ..robots import RobotsCache
 from .base import RawItem
 from .handler_base import ApiHandler
 from .reddit_search_discovery import DiscoveryProvider
+from ..webclass import DEFAULT_REFERENCE, cap_for, domain_class
 
 POST_TYPES = {"discussionforumposting", "socialmediaposting", "blogposting", "article", "newsarticle", "question",
               "qapage", "answer", "comment", "review"}
@@ -35,7 +36,8 @@ def queue_discovered_url(db, settings, url: str, query: str) -> bool:
     skip = settings.get("web_pages.skip_domains", None)
     if skip is None:
         skip = (settings.raw.get("_skip_domains") or [])
-    if any(host == d or host.endswith("." + d) for d in skip):
+    reference = settings.get("web_pages.reference_domains", None) or DEFAULT_REFERENCE
+    if any(host == d or host.endswith("." + d) for d in skip) or domain_class(host, reference) == "reference":
         db.add_url_seen(url, host, query)
         return False
     if not db.add_url_seen(url, host, query):
@@ -112,7 +114,10 @@ def extract_jsonld(html: str, page_url: str) -> list[RawItem]:
         if key in seen:
             continue
         seen.add(key)
-        kind = "comment" if (_types(node) & {"comment", "answer"}) else "post"
+        types = _types(node)
+        kind = ("comment" if types & {"comment", "answer"} else
+                "article" if types & {"article", "newsarticle", "blogposting"} and not types & {"discussionforumposting", "qapage", "question"}
+                else "post")
         out.append(RawItem(uid="web:" + hashlib.sha1(f"{url}|{text[:200]}".encode()).hexdigest()[:20], source="web",
                            kind=kind, url=url, text=text, date=to_iso(node.get("datePublished") or node.get("dateCreated")),
                            thread_uid=thread, community=host, title=str(title) or None))
@@ -133,7 +138,7 @@ def extract_article(html: str, page_url: str, max_chars: int = 8000) -> list[Raw
     meta = soup.find("meta", attrs={"property": "article:published_time"}) or soup.find("time")
     date = to_iso((meta.get("content") or meta.get("datetime")) if meta else None)
     host = urlparse(page_url).hostname
-    return [RawItem(uid="web:" + hashlib.sha1(page_url.encode()).hexdigest()[:20], source="web", kind="post",
+    return [RawItem(uid="web:" + hashlib.sha1(page_url.encode()).hexdigest()[:20], source="web", kind="article",
                     url=page_url, text=(f"{title}\n\n{text}" if title and not text.startswith(title) else text),
                     date=date, thread_uid="web:" + hashlib.sha1(page_url.encode()).hexdigest()[:16], community=host,
                     title=title)]
@@ -199,6 +204,10 @@ class WebPagesHandler(ApiHandler):
         if not raws:
             self.db.bump_counter("web_not_extracted")
             return 1, None
+        cap = cap_for(urlparse(res.url).hostname, self.cfg.get("reference_domains") or DEFAULT_REFERENCE,
+                      tuple(self.cfg.get("official_domains") or ()))
+        for raw in raws:
+            raw.tier_cap = raw.tier_cap or cap
         self.ingest(raws, "web_page")
         return len(raws), None
 

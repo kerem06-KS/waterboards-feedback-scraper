@@ -44,8 +44,8 @@ class Pipeline:
 
         text = self.redactor(text)
         thread_flag = self.db.thread_relevant(raw.thread_uid)
-        own = cap_tier(self.scorer.score(text, thread_relevant=False, hint=raw.score_hint), raw.tier_cap)
-        final: Score = cap_tier(self.scorer.score(text, thread_relevant=True, hint=raw.score_hint), raw.tier_cap) \
+        own = cap_tier(self.scorer.score(text, thread_relevant=False, hint=raw.score_hint, kind=raw.kind), raw.tier_cap)
+        final: Score = cap_tier(self.scorer.score(text, thread_relevant=True, hint=raw.score_hint, kind=raw.kind), raw.tier_cap) \
             if thread_flag else own
         self.stats.candidates += 1
 
@@ -72,7 +72,7 @@ class Pipeline:
         if raw.thread_uid:
             new_thread = self.db.upsert_thread(
                 raw.thread_uid, raw.source, community=raw.community,
-                url=raw.url if raw.kind == "post" else None, title=raw.title, relevant=own.relevant)
+                url=raw.url if raw.kind in ("post", "article") else None, title=raw.title, relevant=own.relevant)
         if final.tier == "relevant":
             self.stats.relevant += 1
         elif final.tier == "borderline":

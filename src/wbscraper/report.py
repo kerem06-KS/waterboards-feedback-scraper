@@ -31,6 +31,22 @@ def build_report(db) -> str:
     out.append(f"Stored items: relevant **{tiers.get('relevant', 0)}**, borderline **{tiers.get('borderline', 0)}**, "
                f"other {tiers.get('irrelevant', 0)}.\n")
 
+    out.append("## Funnel: where the candidates go\n")
+    out.append("Most stored items are thread context or pages that only mention the topic. Stored, mention and system are "
+               "nested; borderline and relevant are the outcome. The drop-off shows where a source's volume turns into "
+               "(or fails to become) usable feedback.\n")
+    out.append("| Source | Stored | Mention the Water Boards | Name a specific system | Borderline | Relevant | Capped (agency page, "
+               "site checker, project repo, agency document) |")
+    out.append("|---|---:|---:|---:|---:|---:|---:|")
+    for r in db.conn.execute(
+            "SELECT source, COUNT(*) n, SUM(entity_hit) hit, "
+            "SUM(CASE WHEN reasons LIKE '%\"stage1:system\"%' THEN 1 ELSE 0 END) sysn, "
+            "SUM(tier='borderline') bl, SUM(tier='relevant') rel, "
+            "SUM(CASE WHEN reasons LIKE '%capped:%' THEN 1 ELSE 0 END) capped "
+            "FROM items GROUP BY source ORDER BY rel DESC, n DESC"):
+        out.append(f"| {r['source']} | {r['n']} | {r['hit']} | {r['sysn']} | {r['bl']} | {r['rel']} | {r['capped']} |")
+    out.append("")
+
     out.append("## Providers and methods\n")
     out.append("| Provider | Method | Requests | OK | Failed | Restricted | Records seen | New stored | New relevant | Last error |")
     out.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---|")

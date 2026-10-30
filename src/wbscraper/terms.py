@@ -155,10 +155,11 @@ class TermLibrary:
         # Stage-2 vocabulary (config/terms/signals.yaml). The query modifiers above are for building searches only.
         signals = load_yaml(terms_dir / "signals.yaml") or {}
         lib.signals = {k: list(v or []) for k, v in signals.items()}
+        lib.regexes["usability_generic"] = phrase_regex(lib.signals.get("usability_generic", []), inflect=True)
         lib.regexes["usability_ambiguous"] = phrase_regex(lib.signals.get("usability_ambiguous", []), inflect=True)
         lib.regexes["usability"] = phrase_regex(
             lib.signals.get("usability", []) + lib.signals.get("usability_ambiguous", []), inflect=True)
-        for name in ("process", "experience", "experience_weak"):
+        for name in ("process", "experience", "experience_soft", "instruction_steps", "experience_help", "experience_weak"):
             lib.regexes[name] = phrase_regex(lib.signals.get(name, []), inflect=True)
         lib.regexes["california"] = lib.context_regex(["@california"])
         lib.regexes["ca_connection"] = lib.context_regex(["@california", "@waterboard_names"])

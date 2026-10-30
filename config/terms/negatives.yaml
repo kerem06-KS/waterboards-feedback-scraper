@@ -29,3 +29,11 @@ negatives:
   - id: promo_boilerplate
     pattern: '\b(click|tap) (here )?to (read|learn|see|view|find out)\b|\blearn more here\b|\bread more here\b|\b(making|makes|make) it (much |even )?(easier|simpler)\b|\bregister (now )?for (the |our )?(webinar|workshop|training|info session|information session)\b'
     penalty: 2
+  # vendor / consultant marketing ("cloud-based CIWQS compliance solutions"): selling a service is not using a site
+  - id: vendor_promo
+    pattern: '\b(request|book|schedule) (a |your )?(free )?(demo|consultation|quote)\b|\bfree trial\b|\bstart(ed)? (your )?free\b|\bsign ?up for free\b|\bget (a )?(free )?quote\b|\bpricing (plans?|starts)\b|\bcloud-based (solution|platform|software|compliance)s?\b|\bour (software|platform|compliance solutions?)\b|\bsubscribe to our newsletter\b'
+    penalty: 4
+  # code-change titles (feat(data): ..., fix: ...) are developers describing their own project, not site feedback
+  - id: commit_message
+    pattern: '\A\s*(feat|fix|chore|docs|refactor|build|ci|test|perf|style)(\([^)]*\))?!?:\s'
+    penalty: 4

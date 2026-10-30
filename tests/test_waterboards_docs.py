@@ -49,10 +49,13 @@ def test_crawl_extracts_letter_passages_and_skips_agency_summaries(tmp_path):
         200, headers={"content-type": "text/html"}, text="""
         <a href="/docs/comment_letter_smallcoalition.pdf">Small coalition letter</a>
         <a href="/docs/response_to_comments.pdf">Response to comments</a>
-        <a href="/docs/scanned.pdf">Scanned letter</a>"""))
+        <a href="/docs/scanned.pdf">Scanned letter</a>
+        <a href="/docs/attachment3.pdf">Attachment 3</a>"""))
     respx.get(f"{HOST}/docs/comment_letter_smallcoalition.pdf").mock(return_value=httpx.Response(
         200, headers={"content-type": "application/pdf"}, content=make_pdf([LETTER])))
     respx.get(f"{HOST}/docs/response_to_comments.pdf").mock(return_value=httpx.Response(
+        200, headers={"content-type": "application/pdf"}, content=make_pdf([AGENCY])))
+    respx.get(f"{HOST}/docs/attachment3.pdf").mock(return_value=httpx.Response(
         200, headers={"content-type": "application/pdf"}, content=make_pdf([AGENCY])))
     respx.get(f"{HOST}/docs/scanned.pdf").mock(return_value=httpx.Response(
         200, headers={"content-type": "application/pdf"}, content=make_pdf([" "])))
@@ -66,7 +69,12 @@ def test_crawl_extracts_letter_passages_and_skips_agency_summaries(tmp_path):
     assert "SMARTS website is difficult to use" in texts
     assert "jane@example.org" not in texts and "555-0100" not in texts and "Executive Director" not in texts
     c = app.db.counters()
-    assert c["wb_letters"] == 1 and c["wb_agency_docs"] == 1 and c["wb_scanned_pdfs"] == 1
+    assert c["wb_letters"] == 1 and c["wb_scanned_pdfs"] == 1
+    assert c["wb_agency_docs"] == 1                                      # attachment3.pdf: downloaded, then classified
+    assert c["wb_pdfs_skipped_by_name"] == 1                             # response_to_comments.pdf: never downloaded
+    statuses = dict(app.db.conn.execute("SELECT url, status FROM urls_seen WHERE url LIKE '%.pdf'").fetchall())
+    assert statuses[f"{HOST}/docs/response_to_comments.pdf"] == "skipped"
+    assert statuses[f"{HOST}/docs/comment_letter_smallcoalition.pdf"] == "letter"
     assert c["wb_pages_fetched"] == 2                                   # /about/ not followed, /dev/ blocked by robots
     assert not [r for r in rows if "Response to Comments" in r["text"]]
 

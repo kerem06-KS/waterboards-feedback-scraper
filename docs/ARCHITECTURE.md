@@ -140,3 +140,22 @@ Subclass `ApiHandler` (see `sources/hackernews.py` for a compact example): set `
 write `_run_<task_type>(payload, priority)` methods that call `self.http`, build `RawItem`s and call `self.ingest()`.
 Add a `plan(lib, settings, since)` function that returns its seed tasks, register it in `sources/registry.py`, add
 settings/term-library entries and a mocked test. The core (HTTP, queue, pipeline, export, reporting) is unchanged.
+
+## Item types, source classes and the document crawl
+
+* **Item type changes the gate.** `RawItem.kind` is `post`/`comment` for a person's words, `article` for a web page's main
+  text and `letter` for a comment-letter passage. `article` and `letter` use the `strict` gates in `relevance.py`: a
+  genuine complaint (`experience` minus `experience_soft`) with interface or process wording for a named system. Reddit,
+  Bluesky etc. use the person-post gates. `rescore.effective_kind` gives rows stored before `article` existed the same
+  treatment.
+* **Source classes** (`webclass.py`): `official` (`*.gov`, `*.edu`, `govdelivery.com`) is capped at borderline,
+  `reference` (site checkers, profilers, dictionaries, vendor manuals) is irrelevant and never fetched. Water Boards
+  comment letters are a separate source and exempt from the `official` cap.
+* **Comment-letter PDFs** are classified by `classify_document` at crawl time and again, per document from its stored
+  passages, by `rescore.letter_doc_caps`: an agency document (agency letterhead first, order/complaint/minutes) is
+  irrelevant, an unclear one borderline. PDFs whose file name says staff report/agenda/minutes/order/response to
+  comments are skipped before downloading (`wb_pdfs_skipped_by_name`); a PDF linked from a "comments" page is hinted as a
+  letter. Each document's outcome is stored in `urls_seen.status` (`letter|agency|unknown|scanned|skipped`).
+* **Crawl budget** (`waterboards_docs.max_pages` / `max_pdfs`): a page over the budget is deferred with an explanatory
+  `last_error`, not marked done, so raising the budget and resuming continues the crawl. `docs_recovery.requeue_skipped_pages`
+  (`wbscraper requeue-docs`) repairs data from older versions that marked such pages done without fetching them.

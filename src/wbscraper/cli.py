@@ -18,6 +18,7 @@ from .config import Settings, deep_merge, load_dotenv, load_settings
 from .export import export_csv, export_review_csv, write_manifest
 from .progress import Dashboard, print_summary
 from .report import build_report
+from .docs_recovery import requeue_skipped_pages
 from .rescore import rescore_all
 from .runner import Runner
 
@@ -174,11 +175,22 @@ def cmd_rescore(args) -> int:
     app = build_app(settings)
     try:
         retired = list((app.lib.relevance or {}).get("retired_queries") or [])
-        res = rescore_all(app.db, app.scorer, retired_queries=retired, prune=not args.keep_pending)
+        res = rescore_all(app.db, app.scorer, retired_queries=retired, prune=not args.keep_pending,
+                          web_cfg=app.lib.forums.get("web_pages", {}))
         console.print(res)
         exp = _do_export(app)
         console.print(f"Regenerated {exp.path} ({exp.rows} relevant rows); borderline items for review are in "
                       f"{exp.path.with_name('borderline_review.csv')}")
+    finally:
+        app.close()
+    return 0
+
+
+def cmd_requeue_docs(args) -> int:
+    settings = _settings(args)
+    app = build_app(settings)
+    try:
+        console.print(requeue_skipped_pages(app.db, dry_run=args.dry_run))
     finally:
         app.close()
     return 0
@@ -318,6 +330,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="only reclassify items; do not cancel any pending task (default also cancels pending work "
                          "that existed only because of items that are no longer relevant)")
     rc.set_defaults(func=cmd_rescore)
+    rq = sub.add_parser("requeue-docs", parents=[common],
+                        help="queue second-pass tasks for Water Boards pages an older version skipped without fetching")
+    rq.add_argument("--dry-run", action="store_true", help="only report how many pages would be queued")
+    rq.set_defaults(func=cmd_requeue_docs)
     sub.add_parser("sources", parents=[common], help="list source adapters").set_defaults(func=cmd_sources)
     t = sub.add_parser("terms", parents=[common], help="preview the generated search queries (offline)")
     t.add_argument("--sample", type=int, default=8, help="queries to show per family")

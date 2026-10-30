@@ -38,8 +38,8 @@ waterboards_docs:
   hosts: [waterboards.ca.gov, www.waterboards.ca.gov, water.waterboards.ca.gov]
   follow_link_words: [comment, letter, written, public notice, response]   # only follow links whose text/URL mention these
   max_depth: 3
-  max_pages: 1500
-  max_pdfs: 1500
+  max_pages: 3000             # a page over the budget is deferred (not marked done): raise this and resume
+  max_pdfs: 3000
   max_pdf_pages: 60
   max_pdf_bytes: 25000000
   passage_chars: 1500
