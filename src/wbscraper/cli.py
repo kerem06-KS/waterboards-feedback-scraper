@@ -40,6 +40,14 @@ def _settings(args) -> Settings:
         if unknown:
             raise SystemExit(f"Unknown source(s): {', '.join(sorted(unknown))}. Available: {', '.join(SOURCE_NAMES)}")
         overrides["sources"] = {n: {"enabled": n in wanted} for n in SOURCE_NAMES}
+    extra = getattr(args, "enable", None)
+    if extra:                                    # additionally enable (optional) sources without disabling the rest
+        wanted_extra = {s.strip() for s in extra.split(",") if s.strip()}
+        unknown = wanted_extra - set(SOURCE_NAMES)
+        if unknown:
+            raise SystemExit(f"Unknown source(s): {', '.join(sorted(unknown))}. Available: {', '.join(SOURCE_NAMES)}")
+        for n in wanted_extra:
+            overrides.setdefault("sources", {}).setdefault(n, {})["enabled"] = True
     cfg_dir = Path(args.config_dir) if getattr(args, "config_dir", None) else None
     return load_settings(cfg_dir, overrides)
 
@@ -191,7 +199,8 @@ def cmd_sources(args) -> int:
         from .sources.registry import EXTRA_SOURCES
         for spec in EXTRA_SOURCES:
             enabled = settings.source_enabled(spec.name)
-            t.add_row(spec.name, "yes" if enabled else "no", "[green]yes[/]" if enabled else "[yellow]no[/]",
+            active = enabled and (not spec.required_env or bool(os.environ.get(spec.required_env)))
+            t.add_row(spec.name, "yes" if enabled else "no", "[green]yes[/]" if active else "[yellow]no[/]",
                       spec.domains, spec.role, spec.credentials)
         console.print(t)
         console.print("Platform-by-platform status, including restricted ones: docs/SOURCE_COVERAGE.md")
@@ -277,6 +286,7 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--min-minutes", type=float, help="retry window for deferred work (default 120)")
         sp.add_argument("--max-minutes", type=float, help="hard stop for this session (default 480)")
         sp.add_argument("--sources", help=f"comma list to enable only these: {', '.join(SOURCE_NAMES)}")
+        sp.add_argument("--enable", help="also enable these sources (e.g. youtube) in addition to the defaults")
         sp.add_argument("--since", help="earliest date to collect, e.g. 2020-01-01 (default: all history)")
         sp.add_argument("--until", help="latest date to collect")
         sp.add_argument("--refresh", action="store_true", help="incremental: only content newer than the last run")

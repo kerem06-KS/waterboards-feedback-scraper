@@ -13,6 +13,7 @@ class SourceSpec:
     domains: str
     module: str                     # module with plan() and a Handler class
     handler: str                    # class name
+    required_env: str = ""          # source is inactive until this environment variable is set
 
 
 EXTRA_SOURCES: list[SourceSpec] = [
@@ -28,6 +29,16 @@ EXTRA_SOURCES: list[SourceSpec] = [
                "waterboards.ca.gov", "wbscraper.sources.waterboards_docs", "WaterBoardsDocsHandler"),
     SourceSpec("web_pages", "Forum / blog / Q&A pages found via search engines", "none", "(many; robots.txt obeyed)",
                "wbscraper.sources.web_pages", "WebPagesHandler"),
+    SourceSpec("bluesky", "Bluesky posts (AT Protocol search, date-window paging) and reply threads",
+               "none (BSKY_HANDLE/BSKY_APP_PASSWORD optional fallback)", "api.bsky.app",
+               "wbscraper.sources.bluesky", "BlueskyHandler"),
+    SourceSpec("lemmy", "Lemmy posts and comments (public API on configured instances)", "none",
+               "lemmy.world, lemmy.ml, …", "wbscraper.sources.lemmy", "LemmyHandler"),
+    SourceSpec("mastodon", "Mastodon hashtag timelines; full-text search with a token",
+               "none (MASTODON_INSTANCE + MASTODON_ACCESS_TOKEN optional)", "mastodon.social, fosstodon.org, …",
+               "wbscraper.sources.mastodon", "MastodonHandler"),
+    SourceSpec("youtube", "YouTube video descriptions and comments (Data API v3)", "YOUTUBE_API_KEY (required, free)",
+               "www.googleapis.com", "wbscraper.sources.youtube", "YouTubeHandler", required_env="YOUTUBE_API_KEY"),
 ]
 EXTRA_NAMES = tuple(s.name for s in EXTRA_SOURCES)
 

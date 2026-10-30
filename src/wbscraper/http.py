@@ -178,10 +178,11 @@ class HttpClient:
                     pass
         return None
 
-    def _once(self, url: str, params: dict | None, headers: dict | None, max_bytes: int | None = None) -> Fetched:
+    def _once(self, url: str, params: dict | None, headers: dict | None, max_bytes: int | None = None,
+              method: str = "GET", json_body=None) -> Fetched:
         cap = max_bytes or self.max_bytes
         try:
-            with self._client.stream("GET", url, params=params, headers=headers) as resp:
+            with self._client.stream(method, url, params=params, headers=headers, json=json_body) as resp:
                 chunks, size = [], 0
                 for chunk in resp.iter_bytes():
                     size += len(chunk)
@@ -209,13 +210,13 @@ class HttpClient:
         raise FetchError("client", f"HTTP {status} from {url}", status, retry_after, body)
 
     def get(self, url: str, *, params: dict | None = None, headers: dict | None = None,
-            domain: str | None = None, max_bytes: int | None = None) -> Fetched:
+            domain: str | None = None, max_bytes: int | None = None, method: str = "GET", json_body=None) -> Fetched:
         domain = domain or (urlparse(url).hostname or "default")
         last: FetchError | None = None
         for attempt in range(self.max_retries + 1):
             self.pacer.acquire(domain)
             try:
-                result = self._once(url, params, headers, max_bytes)
+                result = self._once(url, params, headers, max_bytes, method, json_body)
             except FetchError as err:
                 last = err
                 self.record_failure(domain, err)
@@ -244,3 +245,9 @@ class HttpClient:
         except FetchError as err:
             self.record_failure(domain, err)
             raise
+
+    def post_json(self, url: str, body: dict, *, headers: dict | None = None, domain: str | None = None):
+        """POST a JSON body and parse the JSON reply (used only for optional logins such as Bluesky app passwords)."""
+        domain = domain or (urlparse(url).hostname or "default")
+        res = self.get(url, headers=headers, domain=domain, method="POST", json_body=body)
+        return res.json()

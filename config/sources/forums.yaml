@@ -60,3 +60,21 @@ web_pages:
     - amazon.com
     - ebay.com
   max_discovery_queries: 220
+
+# ---------------------------------------------------------------- Phase 3A (lightweight platforms)
+bluesky:
+  extra_queries: ["State Water Board", "California Water Boards", "water board website"]
+
+lemmy:
+  instances: [lemmy.world, lemmy.ml, sh.itjust.works, lemmy.ca, programming.dev]
+  extra_queries: ["State Water Board", "California Water Boards"]
+
+mastodon:
+  instances: [mastodon.social, fosstodon.org, mstdn.social, sfba.social, universeodon.com]
+  tags: [waterboards, swrcb, calwatrs, ciwqs, geotracker, stormwater, wastewater, waterquality, californiawater, cawater]
+  max_pages: 25
+
+youtube:                              # disabled by default: needs YOUTUBE_API_KEY (free Google Cloud key)
+  max_search_calls: 40                # search costs 100 quota units of the 10,000/day free quota
+  max_comment_pages: 5
+  extra_queries: ["California State Water Board website", "California water operator certification renewal"]

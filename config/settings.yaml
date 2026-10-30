@@ -37,6 +37,9 @@ domains:
   api.stackexchange.com:            { interval: 2.0,  jitter: 0.5 }
   hn.algolia.com:                   { interval: 2.0,  jitter: 0.5 }
   api.github.com:                   { interval: 7.0,  jitter: 0.3 }   # unauthenticated search allows 10/min
+  api.bsky.app:                     { interval: 2.0,  jitter: 0.5 }
+  bsky.social:                      { interval: 2.0,  jitter: 0.5 }
+  www.googleapis.com:               { interval: 1.0,  jitter: 0.3 }
   waterboards.ca.gov:               { interval: 3.0,  jitter: 0.5 }
   www.waterboards.ca.gov:           { interval: 3.0,  jitter: 0.5 }
   water.waterboards.ca.gov:         { interval: 3.0,  jitter: 0.5 }
@@ -83,6 +86,10 @@ sources:                      # set enabled: false to skip a source entirely
   github:            { enabled: true }   # GITHUB_TOKEN optional (raises rate limits)
   waterboards_docs:  { enabled: true }   # public comment letters and documents on waterboards.ca.gov
   web_pages:         { enabled: true }   # forum/blog/Q&A pages found by search engines (robots.txt obeyed)
+  bluesky:           { enabled: true }   # keyless; BSKY_HANDLE/BSKY_APP_PASSWORD only used as a fallback
+  lemmy:             { enabled: true }
+  mastodon:          { enabled: true }   # keyless hashtag timelines; MASTODON_INSTANCE + MASTODON_ACCESS_TOKEN add full-text search
+  youtube:           { enabled: false }  # needs YOUTUBE_API_KEY; enable with: wbscraper run --enable youtube
 
 redaction:
   emails: true
