@@ -40,7 +40,12 @@ def make_settings(tmp_path: Path, **overrides):
         "http": {"max_retries": 2, "backoff_base": 0.01, "backoff_max": 0.05},
     }
     from wbscraper.config import deep_merge
-    return load_settings(REPO_CONFIG, deep_merge(base, overrides))
+    settings = load_settings(REPO_CONFIG, deep_merge(base, overrides))
+    explicit = set((overrides.get("domains") or {}))
+    for dom in list(settings.raw["domains"]):          # no pacing delays in tests unless a test sets one explicitly
+        if dom not in explicit:
+            settings.raw["domains"][dom] = dict(zero)
+    return settings
 
 
 def make_app(tmp_path: Path, providers: dict | None = None, clock: FakeClock | None = None, **overrides):
@@ -138,3 +143,29 @@ class FakeArchive(RedditProvider):
         self._maybe_fail(after, before)
         rows = [r for r in self.posts if r.get("url", "").startswith(prefix)]
         return build_page(self._slice(rows, after, before, limit), post_from_json)
+
+
+def make_pdf(pages: list[str]) -> bytes:
+    """Minimal valid text PDF (Helvetica) so pypdf extraction is exercised for real."""
+    def esc(t: str) -> str:
+        return t.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+    n = len(pages)
+    kids = " ".join(f"{4 + 2 * i} 0 R" for i in range(n))
+    objs = [b"<< /Type /Catalog /Pages 2 0 R >>", f"<< /Type /Pages /Kids [{kids}] /Count {n} >>".encode(),
+            b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    for i, text in enumerate(pages):
+        objs.append((f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents {5 + 2 * i} 0 R "
+                     f"/Resources << /Font << /F1 3 0 R >> >> >>").encode())
+        stream = "BT /F1 11 Tf 40 750 Td 14 TL " + " ".join(f"({esc(l)}) Tj T*" for l in text.split("\n")) + " ET"
+        objs.append(f"<< /Length {len(stream)} >>\nstream\n{stream}\nendstream".encode())
+    out, offsets = b"%PDF-1.4\n", []
+    for i, o in enumerate(objs, start=1):
+        offsets.append(len(out))
+        out += f"{i} 0 obj\n".encode() + o + b"\nendobj\n"
+    xref = len(out)
+    out += f"xref\n0 {len(objs) + 1}\n0000000000 65535 f \n".encode()
+    for off in offsets:
+        out += f"{off:010d} 00000 n \n".encode()
+    out += f"trailer\n<< /Size {len(objs) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF".encode()
+    return out

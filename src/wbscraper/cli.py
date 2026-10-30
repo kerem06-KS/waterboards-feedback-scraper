@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from . import __version__, queries
-from .app import SOURCE_NAMES, App, build_app
+from .app import REDDIT_SOURCE_NAMES, SOURCE_NAMES, App, build_app
 from .config import Settings, deep_merge, load_dotenv, load_settings
 from .export import export_csv, write_manifest
 from .progress import Dashboard, print_summary
@@ -138,6 +138,10 @@ def cmd_status(args) -> int:
         for r in db.task_counts_by_type():
             t.add_row(r["type"], r["status"], str(r["n"]))
         console.print(t)
+        from .report import COUNTER_LABELS
+        for key, val in sorted(db.counters().items()):
+            if key in COUNTER_LABELS and val:
+                console.print(f"  {COUNTER_LABELS[key]}: {val}")
         console.print(f"CSV (last export): {settings.csv_path}  exists={settings.csv_path.exists()}")
     finally:
         app.close()
@@ -184,6 +188,11 @@ def cmd_sources(args) -> int:
             active = bool(prov and prov.available())
             t.add_row(key, "yes" if enabled else "no", "[green]yes[/]" if active else "[yellow]no[/]",
                       prov.domain if prov else "-", role, creds)
+        from .sources.registry import EXTRA_SOURCES
+        for spec in EXTRA_SOURCES:
+            enabled = settings.source_enabled(spec.name)
+            t.add_row(spec.name, "yes" if enabled else "no", "[green]yes[/]" if enabled else "[yellow]no[/]",
+                      spec.domains, spec.role, spec.credentials)
         console.print(t)
         console.print("Platform-by-platform status, including restricted ones: docs/SOURCE_COVERAGE.md")
     finally:
@@ -199,19 +208,19 @@ def cmd_terms(args) -> int:
     console.print("Planned tasks by family: " + ", ".join(f"{k}={v}" for k, v in st.items()))
     console.print(f"Entities: {len(lib.entities)}; subreddits: {len(queries.subreddit_tiers(lib))}; "
                   f"PullPush tokens: {len(queries.pullpush_tokens(lib))}")
-    tasks = queries.plan_reddit_tasks(lib, settings)
+    tasks = queries.plan_all(lib, settings)
     if args.dump:
         with open(args.dump, "w", encoding="utf-8") as fh:
             fh.write("priority\tfamily\ttype\tquery\tsubreddit\n")
             for ttype, p, pri, fam in sorted(tasks, key=lambda x: -x[2]):
-                fh.write(f"{pri}\t{fam}\t{ttype}\t{p.get('q') or p.get('prefix')}\t{p.get('subreddit') or ''}\n")
+                fh.write(f"{pri}\t{fam}\t{ttype}\t{p.get('q') or p.get('prefix') or p.get('url') or p.get('org') or ''}\t{p.get('subreddit') or p.get('site') or ''}\n")
         console.print(f"Wrote {len(tasks)} planned queries to {args.dump}")
     else:
-        for fam in ("reddit_pullpush", "reddit_discovery", "reddit_arcticshift", "reddit_urls"):
+        for fam in sorted({t[3] for t in tasks}):
             sample = [t for t in tasks if t[3] == fam][: args.sample]
             console.print(f"\n[bold]{fam}[/] (first {len(sample)}):")
             for ttype, p, pri, _ in sample:
-                console.print(f"  [{pri}] {p.get('kind', '')} {p.get('q') or p.get('prefix')}"
+                console.print(f"  [{pri}] {p.get('kind', '')} {p.get('q') or p.get('prefix') or p.get('url') or p.get('org') or ''}"
                               + (f"  (r/{p['subreddit']})" if p.get("subreddit") else ""))
     return 0
 

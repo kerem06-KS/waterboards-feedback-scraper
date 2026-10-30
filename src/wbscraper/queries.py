@@ -173,14 +173,25 @@ def plan_reddit_tasks(lib: TermLibrary, settings, *, since: int | None = None, e
     return tasks
 
 
-def seed(db: Database, lib: TermLibrary, settings, *, since: int | None = None) -> int:
+def plan_all(lib: TermLibrary, settings, *, since: int | None = None) -> list[tuple[str, dict, int, str]]:
+    """Reddit tasks plus the tasks of every enabled extra source (each source module provides plan())."""
+    from .sources.registry import EXTRA_SOURCES, load
     enabled = {n: settings.source_enabled(n) for n in
                ("reddit_pullpush", "reddit_arcticshift", "reddit_discovery", "reddit_praw")}
-    return db.add_tasks(plan_reddit_tasks(lib, settings, since=since, enabled=enabled))
+    tasks = plan_reddit_tasks(lib, settings, since=since, enabled=enabled)
+    for spec in EXTRA_SOURCES:
+        if settings.source_enabled(spec.name):
+            mod, _ = load(spec)
+            tasks.extend(mod.plan(lib, settings, since))
+    return tasks
+
+
+def seed(db: Database, lib: TermLibrary, settings, *, since: int | None = None) -> int:
+    return db.add_tasks(plan_all(lib, settings, since=since))
 
 
 def plan_stats(lib: TermLibrary, settings) -> dict[str, int]:
-    tasks = plan_reddit_tasks(lib, settings)
+    tasks = plan_all(lib, settings)
     out: dict[str, int] = {}
     for t, p, _pri, fam in tasks:
         out[fam] = out.get(fam, 0) + 1

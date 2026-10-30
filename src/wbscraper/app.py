@@ -20,7 +20,10 @@ from .sources.reddit_tasks import RedditHandler
 from .stats import RunStats
 from .terms import TermLibrary
 
-SOURCE_NAMES = ("reddit_pullpush", "reddit_arcticshift", "reddit_discovery", "reddit_praw")
+from .sources.registry import EXTRA_NAMES, EXTRA_SOURCES, load as load_extra
+
+REDDIT_SOURCE_NAMES = ("reddit_pullpush", "reddit_arcticshift", "reddit_discovery", "reddit_praw")
+SOURCE_NAMES = REDDIT_SOURCE_NAMES + EXTRA_NAMES
 
 
 @dataclass
@@ -73,4 +76,12 @@ def build_app(settings: Settings, *, db: Database | None = None, http: HttpClien
     reddit = RedditHandler(db, http, pipeline, settings, providers, stats,
                            known_subreddits=queries.known_subreddits(lib), clock=clock)
     reddit.anchor_provider = queries.discovered_sub_anchors(lib)
-    return App(settings, lib, db, http, stats, scorer, pipeline, providers, [reddit])
+    handlers: list = [reddit]
+    for spec in EXTRA_SOURCES:
+        if settings.source_enabled(spec.name):
+            _, cls = load_extra(spec)
+            handlers.append(cls(db, http, pipeline, settings, stats, cfg=lib.forums.get(spec.name, {}), clock=clock))
+    for h in handlers:
+        if hasattr(h, "attach_discovery"):
+            h.attach_discovery(providers.get("discovery") or DiscoveryProvider(search_fn=search_fn))
+    return App(settings, lib, db, http, stats, scorer, pipeline, providers, handlers)

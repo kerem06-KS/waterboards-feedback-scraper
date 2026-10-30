@@ -107,4 +107,8 @@ def load_settings(config_dir: Path | None = None, overrides: dict | None = None)
     dr = raw.get("date_range", {}) or {}
     since = parse_date_to_epoch(dr.get("since") or "2005-06-01") or 1117584000
     until = parse_date_to_epoch(dr.get("until")) if dr.get("until") else None
+    forums_path = config_dir / "sources" / "forums.yaml"
+    if forums_path.exists():          # Phase 2 per-source sections are exposed through Settings.get() as well
+        for key, val in (load_yaml(forums_path) or {}).items():
+            raw.setdefault(key, val)
     return Settings(raw=raw, config_dir=config_dir, data_dir=data_dir, since_ts=since, until_ts=until)

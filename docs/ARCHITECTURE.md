@@ -10,12 +10,15 @@ src/wbscraper/
   http.py                  shared client: pacing, jittered backoff, Retry-After, size caps, cooldowns
   runner.py                single-threaded loop: pick -> execute -> commit; stop conditions; Ctrl+C
   pipeline.py              redact -> score -> dedupe -> store, one place for all filtering
-  relevance.py redact.py dates.py textutil.py export.py report.py rescore.py progress.py stats.py
+  relevance.py redact.py dates.py textutil.py htmltext.py robots.py export.py report.py rescore.py progress.py stats.py
   sources/
     base.py                RawItem, Page, exceptions
     reddit_provider.py     provider interface + page helpers
     reddit_pullpush.py reddit_arcticshift.py reddit_search_discovery.py reddit_praw.py
     reddit_tasks.py        fallback chains, paging, window splitting, thread expansion
+    handler_base.py        ApiHandler: scheduler hooks, stats/health bookkeeping for single-provider sources
+    stackexchange.py hackernews.py github.py waterboards_docs.py web_pages.py   Phase 2 handlers (+ plan())
+    registry.py            list of extra sources (name, role, credentials, module) used by app/CLI
 tests/                     mocked network only (sockets are blocked by a fixture)
 ```
 
@@ -75,8 +78,23 @@ tuned with `wbscraper rescore`).
 * Dates: ISO 8601 UTC; implausible (pre-1995 or future) or missing dates become empty cells.
 * Export is atomic (temp file + rename), `csv` module, `QUOTE_ALL`, UTF-8, exactly `text,date,source_url`.
 
+## Documents and pages (Phase 2)
+
+* **Comment letters.** `wb_page` tasks crawl the yearly "Documents for Public Comment" indexes, following only links
+  whose text or URL mention comments/letters (depth ≤ 3, robots.txt obeyed, 3 s between requests). `wb_pdf` tasks
+  download a PDF (≤ 25 MB), extract text with pypdf and classify it from its first page: *letter* (salutation,
+  "on behalf of", "respectfully"…), *agency* (staff report, response/summary of comments, agenda, minutes, notice…) or
+  *unknown*. Only letters are processed: the signature block is cut, text is grouped into ≤ 1,500-character
+  passages that never cross a page, and each passage is scored with an implicit "State Water Board" anchor so it must
+  show a digital/service signal (website, portal, login, upload, database…) to qualify. Each passage keeps the
+  letter's date and a `#page=N` URL, and passages have no thread context, so policy-only text is never promoted.
+* **Web pages.** Search-engine results go through `queue_discovered_url`, which skips login-walled domains and routes
+  waterboards.ca.gov URLs to the document crawler. `web_page` tasks check robots.txt, then try JSON-LD, Discourse
+  topic JSON, the WordPress comments API and finally the main article text. Authors are never read.
+
 ## Adding a source
 
-Implement a provider/handler (see `sources/reddit_provider.py` and `reddit_tasks.py`), expose `TASK_TYPES`,
-`next_domain`, `earliest_ready` and `run` on the handler, add its tasks to `queries.plan_*`, add settings and
-term-library entries, and write a mocked test. The core (HTTP, queue, pipeline, export, reporting) is unchanged.
+Subclass `ApiHandler` (see `sources/hackernews.py` for a compact example): set `TASK_TYPES`, `PROVIDER`, `DOMAIN` and
+write `_run_<task_type>(payload, priority)` methods that call `self.http`, build `RawItem`s and call `self.ingest()`.
+Add a `plan(lib, settings, since)` function that returns its seed tasks, register it in `sources/registry.py`, add
+settings/term-library entries and a mocked test. The core (HTTP, queue, pipeline, export, reporting) is unchanged.

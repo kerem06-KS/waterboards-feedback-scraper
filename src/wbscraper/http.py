@@ -178,14 +178,15 @@ class HttpClient:
                     pass
         return None
 
-    def _once(self, url: str, params: dict | None, headers: dict | None) -> Fetched:
+    def _once(self, url: str, params: dict | None, headers: dict | None, max_bytes: int | None = None) -> Fetched:
+        cap = max_bytes or self.max_bytes
         try:
             with self._client.stream("GET", url, params=params, headers=headers) as resp:
                 chunks, size = [], 0
                 for chunk in resp.iter_bytes():
                     size += len(chunk)
-                    if size > self.max_bytes:
-                        raise FetchError("too_large", f"response exceeds {self.max_bytes} bytes", status=resp.status_code)
+                    if size > cap:
+                        raise FetchError("too_large", f"response exceeds {cap} bytes", status=resp.status_code)
                     chunks.append(chunk)
                 content = b"".join(chunks)
                 status = resp.status_code
@@ -208,13 +209,13 @@ class HttpClient:
         raise FetchError("client", f"HTTP {status} from {url}", status, retry_after, body)
 
     def get(self, url: str, *, params: dict | None = None, headers: dict | None = None,
-            domain: str | None = None) -> Fetched:
+            domain: str | None = None, max_bytes: int | None = None) -> Fetched:
         domain = domain or (urlparse(url).hostname or "default")
         last: FetchError | None = None
         for attempt in range(self.max_retries + 1):
             self.pacer.acquire(domain)
             try:
-                result = self._once(url, params, headers)
+                result = self._once(url, params, headers, max_bytes)
             except FetchError as err:
                 last = err
                 self.record_failure(domain, err)

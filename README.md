@@ -18,7 +18,8 @@ The tool runs **locally** and is polite by design: per-domain rate limits, jitte
 `User-Agent`, checkpointing after every task, and graceful Ctrl+C. It does **not** bypass robots.txt, CAPTCHAs,
 logins or other access controls; when a source blocks access the tool records it as *restricted* and moves on.
 
-> **Status:** Phase 1 (core + Reddit) is implemented. Other sources are tracked in
+> **Status:** Reddit (Phase 1) and Stack Exchange, Hacker News, GitHub, Water Boards comment letters and forum/blog
+> pages (Phase 2) are implemented. Every platform investigated, including restricted ones, is in
 > [docs/SOURCE_COVERAGE.md](docs/SOURCE_COVERAGE.md).
 
 ---
@@ -72,7 +73,8 @@ wbscraper run
 | `wbscraper check` | One small request per provider to confirm connectivity. |
 | `pytest` | Run the test suite (fully mocked; never touches the network). |
 
-Useful `run` options: `--min-minutes 120`, `--max-minutes 480`, `--sources reddit_arcticshift,reddit_discovery`,
+Useful `run` options: `--min-minutes 120`, `--max-minutes 480`, `--sources reddit_arcticshift,stackexchange,github`
+(see `wbscraper sources` for all names; default is every enabled source),
 `--since 2020-01-01`, `--until 2025-12-31`, `--refresh` (incremental: only content newer than the last run),
 `--fresh` (archive old state and start over), `--no-dashboard` (plain status lines, good for logs).
 
@@ -109,6 +111,16 @@ data/logs/run-*.log                    <- detailed logs and errors (the terminal
   | Look up posts by id | Arctic Shift | PullPush, official API |
   | Read a whole thread | Arctic Shift | PullPush, official API |
   | Discover threads via search engines | `ddgs` metasearch | — |
+
+* **Other sources** (all free, no key needed):
+
+  | Source | What is collected | Notes |
+  |---|---|---|
+  | Stack Exchange | questions, answers and comments on gis, engineering, earthscience, law, diy, opendata, sustainability, superuser, stackoverflow | keyless quota is 300 requests/day; the adapter pauses when it runs low. A free `STACKEXCHANGE_KEY` raises it to 10,000 |
+  | Hacker News | stories, and the full comment tree of relevant stories | Algolia API |
+  | GitHub | issues/comments in the Water Boards' own data-team repos (non-staff authors only) and global issue search | unauthenticated limits are tight; set `GITHUB_TOKEN` (`export GITHUB_TOKEN=$(gh auth token)`) to speed up |
+  | waterboards.ca.gov | **public comment letters** (PDF) found from the "Documents for Public Comment" pages, split into verbatim page-anchored passages (`…pdf#page=3`) | robots.txt obeyed. Agency staff reports, response-to-comments, comment summaries, agendas and minutes are **skipped** so one summary is never counted as many independent posts; skipped, unclassified and scanned PDFs are counted in `wbscraper status` / `report` |
+  | Forums, blogs, Q&A | pages found by search engines: schema.org JSON-LD, Discourse topics, WordPress comments, article text | robots.txt obeyed; Facebook, Instagram, LinkedIn, X, TikTok, Nextdoor, YouTube pages are never fetched |
 
 * **Ctrl+C** once: finish the current task, save, export, print the summary. Press it twice to leave immediately —
   state is committed after every task, so nothing is lost.
@@ -159,6 +171,8 @@ wbscraper sources      # praw should now show as active
 
 Windows PowerShell: `$env:REDDIT_CLIENT_ID="..."`.
 
+Other optional keys (all only raise limits): `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`.
+
 ## Privacy and responsible use
 
 * Only public content is collected, through documented/public interfaces, at conservative request rates.
@@ -173,6 +187,8 @@ Windows PowerShell: `$env:REDDIT_CLIENT_ID="..."`.
 * PullPush and Arctic Shift are volunteer-run archives with no uptime guarantee; their coverage of recent content
   can lag, and deleted/removed posts are gone. `wbscraper report` flags a provider whose newest record looks stale.
 * Search-engine discovery (`ddgs`) is unofficial and may be throttled; it is deliberately slow.
+* Many recent Water Boards comment letters are released only on request by e-mail, scanned letters need OCR (not
+  implemented), and compiled response documents are skipped by design.
 * Facebook groups, LinkedIn, Nextdoor and members-only professional forums are not collectible with permitted
   methods; see [docs/SOURCE_COVERAGE.md](docs/SOURCE_COVERAGE.md). The tool never claims complete coverage of the
   internet — use `wbscraper report` to see what was actually reached.

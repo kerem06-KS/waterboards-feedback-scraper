@@ -286,10 +286,12 @@ class RedditHandler:
 
     def _handle_discovery(self, page: Page, query: str, priority: int) -> None:
         new_urls = 0
+        from .web_pages import queue_discovered_url
         for url, q in page.urls:
-            host = url.split("/")[2] if "//" in url else url
-            if self.db.add_url_seen(url, host, q):
+            if queue_discovered_url(self.db, self.settings, url, q):
                 new_urls += 1
+            else:
+                self.db.add_url_seen(url, url.split("/")[2] if "//" in url else url, q)
         self.stats.urls_discovered += new_urls + len(page.post_ids)
         ids = []
         for pid in page.post_ids:

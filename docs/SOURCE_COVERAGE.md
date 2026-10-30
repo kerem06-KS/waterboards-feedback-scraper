@@ -25,10 +25,10 @@ prohibit automated collection; deliberately not collected) · **Future** (docume
 
 | Source | Status | Notes |
 |---|---|---|
-| Stack Exchange network (gis, engineering, earthscience, law, diy, …) | Planned (Phase 2) | Verified keyless API (300 requests/day; 10k with a free key). Note GeoTracker GPS-app false positives. |
-| Hacker News (Algolia) | Planned (Phase 2) | Verified keyless; low yield. |
-| GitHub issues (incl. the Water Boards' own `CAWaterBoardDataCenter`, 57 public repos) | Planned (Phase 2) | Keyless at low limits; optional `GITHUB_TOKEN`. |
-| Professional operator/engineering forums, blogs, Q&A sites | Planned (Phase 2) | Found through search-engine discovery; robots-aware extraction of schema.org / Discourse / WordPress comment data. No dedicated California-operator public forum was found; CWEA/CASQA/AWWA communities are members-only. |
+| Stack Exchange network (gis, engineering, earthscience, law, diy, …) | **Implemented** (Phase 2) | Verified keyless API (300 requests/day; 10k with a free key). Note GeoTracker GPS-app false positives. |
+| Hacker News (Algolia) | **Implemented** (Phase 2) | Verified keyless; low yield. |
+| GitHub issues (incl. the Water Boards' own `CAWaterBoardDataCenter`, 57 public repos) | **Implemented** (Phase 2) | Keyless at low limits; optional `GITHUB_TOKEN`. |
+| Professional operator/engineering forums, blogs, Q&A sites | **Implemented** (Phase 2) | Found through search-engine discovery; robots-aware extraction of schema.org / Discourse / WordPress comment data. No dedicated California-operator public forum was found; CWEA/CASQA/AWWA communities are members-only. |
 
 ## Priority 3: Other platforms
 
@@ -46,8 +46,8 @@ prohibit automated collection; deliberately not collected) · **Future** (docume
 
 | Source | Status | Notes |
 |---|---|---|
-| waterboards.ca.gov comment-letter pages (`/public_notices/comments/`, 2007→) and PDFs | Planned (Phase 2) | robots.txt blocks only asset folders and some eWRIMS paths (verified). Many recent letters are released only by e-mail request to `commentletters@waterboards.ca.gov`. Agency summaries/responses are classified as agency documents and excluded from the CSV by default. |
-| Board meeting materials, hearing submissions | Planned (Phase 2) | Same pipeline; scanned PDFs without a text layer are counted as a gap (OCR is a future enhancement). |
+| waterboards.ca.gov comment-letter pages (`/public_notices/comments/`, 2007→) and PDFs | **Implemented** (Phase 2) | robots.txt blocks only asset folders and some eWRIMS paths (verified). Many recent letters are released only by e-mail request to `commentletters@waterboards.ca.gov`. Agency summaries/responses are classified as agency documents and excluded from the CSV by default. |
+| Board meeting materials, hearing submissions | **Implemented** (Phase 2; reached only through comment pages and search-engine discovery) | Same pipeline; scanned PDFs without a text layer are counted as a gap (OCR is a future enhancement). |
 
 ## Search and discovery infrastructure
 

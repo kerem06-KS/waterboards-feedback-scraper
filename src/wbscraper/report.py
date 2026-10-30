@@ -5,6 +5,21 @@ import time
 
 STALE_DAYS = 120
 
+COUNTER_LABELS = {
+    "wb_pages_fetched": "Water Boards pages fetched",
+    "wb_pdfs_queued": "Water Boards PDFs discovered",
+    "wb_letters": "PDFs classified as individual public comment letters (processed)",
+    "wb_agency_docs": "PDFs classified as agency documents / comment summaries (skipped: not independent posts)",
+    "wb_unclassified_docs": "PDFs that could not be classified (skipped)",
+    "wb_scanned_pdfs": "Scanned PDFs without a text layer (coverage gap: OCR not implemented)",
+    "wb_pdf_unreadable": "Unreadable/corrupt PDFs",
+    "wb_pdf_too_large": "PDFs over the size cap",
+    "wb_robots_or_host_blocked": "Water Boards URLs skipped (robots.txt or outside allowed hosts)",
+    "web_robots_blocked": "Web pages skipped because robots.txt disallows them",
+    "web_not_html": "Web pages skipped (not HTML)",
+    "web_not_extracted": "Web pages fetched but no discussion text could be extracted",
+}
+
 
 def _ts(v) -> str:
     return time.strftime("%Y-%m-%d %H:%M", time.gmtime(v)) if v else "-"
@@ -67,6 +82,12 @@ def build_report(db) -> str:
         out.append("\nFailed tasks (top reasons):\n")
         for r in failed:
             out.append(f"- {r['type']} x{r['n']}: {(r['last_error'] or '')[:120]}")
-    out.append(f"\nURLs discovered by search engines for later page extraction: {db.urls_seen_count()}\n")
+    out.append(f"\nURLs discovered by search engines: {db.urls_seen_count()}\n")
+    counters = db.counters()
+    shown = [(COUNTER_LABELS[k], v) for k, v in counters.items() if k in COUNTER_LABELS and v]
+    if shown:
+        out.append("## Documents and pages not turned into posts (nothing is discarded silently)\n")
+        out.extend(f"- {label}: {v}" for label, v in shown)
+        out.append("")
     out.append("See `docs/SOURCE_COVERAGE.md` for the full platform matrix (implemented, optional, restricted, future).")
     return "\n".join(out) + "\n"

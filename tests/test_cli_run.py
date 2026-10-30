@@ -38,7 +38,8 @@ def test_run_command_collects_exports_and_summarises(tmp_path, monkeypatch, caps
         respx.get(url__regex=r"https://arctic-shift\.photon-reddit\.com/.*").mock(
             return_value=httpx.Response(200, json={"data": []}))
         rc = main(["run", "--config-dir", str(cfg), "--data-dir", str(tmp_path / "d"), "--min-minutes", "0",
-                   "--max-minutes", "5", "--no-dashboard"])
+                   "--max-minutes", "5", "--no-dashboard",
+                   "--sources", "reddit_pullpush,reddit_arcticshift,reddit_discovery"])
 
     out = capsys.readouterr().out
     assert rc == 0

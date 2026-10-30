@@ -80,3 +80,14 @@ class Pipeline:
         else:
             self.stats.below_threshold += 1
         return IngestResult("stored", final.tier, own.relevant, final.entity_hit, new_thread)
+
+    def ingest_many(self, raws: list[RawItem], provider: str, method: str) -> list[IngestResult]:
+        """Ingest a batch (e.g. a question with its answers/comments). Items dropped before their thread was known
+        to be relevant are scored again once it is, so context-qualified replies are not lost."""
+        results = [self.ingest(r, provider, method) for r in raws]
+        for i, (r, res) in enumerate(zip(raws, results)):
+            if res.status == "below_threshold" and r.thread_uid and self.db.thread_relevant(r.thread_uid):
+                self.stats.candidates -= 1
+                self.stats.below_threshold -= 1
+                results[i] = self.ingest(r, provider, method)
+        return results

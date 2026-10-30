@@ -86,6 +86,7 @@ class TermLibrary:
     negatives: list[Negative]
     subreddits: dict[str, list[str]]
     relevance: dict
+    forums: dict = field(default_factory=dict)
     regexes: dict[str, re.Pattern | None] = field(default_factory=dict)
 
     # -- context helpers ---------------------------------------------------------------
@@ -121,8 +122,10 @@ class TermLibrary:
         rel_path = Path(config_dir) / "relevance.yaml"
         relevance = load_yaml(rel_path) if rel_path.exists() else {}
 
+        forums_path = Path(config_dir) / "sources" / "forums.yaml"
+        forums = load_yaml(forums_path) if forums_path.exists() else {}
         lib = cls(entities=[], groups=groups, modifiers=modifiers, questions=questions, negatives=[],
-                  subreddits=subreddits, relevance=relevance)
+                  subreddits=subreddits, relevance=relevance, forums=forums)
 
         for raw in ent_raw:
             weak: list[WeakTerm] = []

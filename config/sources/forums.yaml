@@ -1,0 +1,62 @@
+# Phase 2 source settings (Stack Exchange, Hacker News, GitHub, Water Boards documents, generic pages).
+
+stackexchange:
+  # Ordered by expected yield. Each site costs one search per query; the keyless quota is 300 requests/day
+  # (10,000 with a free STACKEXCHANGE_KEY) and the adapter pauses when it runs low.
+  sites: [gis, engineering, earthscience, law, diy, opendata, sustainability, superuser, stackoverflow]
+  extra_queries: ["State Water Board", "Regional Water Board", "water board portal", "waterboards"]
+  pagesize: 50
+  max_pages: 2
+  quota_reserve: 15
+  question_batch: 25
+
+hackernews:
+  extra_queries: ["State Water Board", "California Water Boards", "water board website"]
+  max_pages: 5
+
+github:
+  orgs: [CAWaterBoardDataCenter]      # the Water Boards' own data team; issues/comments from non-members only
+  skip_associations: [OWNER, MEMBER]
+  search_queries_limit: 40            # global issue search uses the distinctive tokens, capped here
+  max_pages: 3
+
+waterboards_docs:
+  # Public comment letters and related documents on waterboards.ca.gov (robots.txt is obeyed).
+  seeds:
+    - https://www.waterboards.ca.gov/public_notices/comments/
+    - https://www.waterboards.ca.gov/public_notices/comments/2017.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2016.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2015.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2014.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2013.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2012.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2011.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2010.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2009.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2008.html
+    - https://www.waterboards.ca.gov/public_notices/comments/2007.html
+  hosts: [waterboards.ca.gov, www.waterboards.ca.gov, water.waterboards.ca.gov]
+  follow_link_words: [comment, letter, written, public notice, response]   # only follow links whose text/URL mention these
+  max_depth: 3
+  max_pages: 1500
+  max_pdfs: 1500
+  max_pdf_pages: 60
+  max_pdf_bytes: 25000000
+  passage_chars: 1500
+  implicit_context: "State Water Board"   # comment letters are addressed to the Boards; used only for scoring
+
+web_pages:
+  max_page_bytes: 5000000
+  skip_domains:                       # login-walled or non-text platforms: never fetched
+    - facebook.com
+    - instagram.com
+    - linkedin.com
+    - x.com
+    - twitter.com
+    - tiktok.com
+    - nextdoor.com
+    - youtube.com
+    - pinterest.com
+    - amazon.com
+    - ebay.com
+  max_discovery_queries: 220
