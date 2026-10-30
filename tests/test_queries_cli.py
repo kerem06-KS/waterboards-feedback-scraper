@@ -85,3 +85,38 @@ def test_cli_dump_writes_every_planned_query(tmp_path):
     assert main(["terms", "--data-dir", str(tmp_path / "d"), "--dump", str(out)]) == 0
     lines = out.read_text(encoding="utf-8").splitlines()
     assert lines[0].startswith("priority\t") and len(lines) > 1000
+
+
+def test_year_windows_are_calendar_aligned_stable_and_open_ended():
+    from wbscraper.sources.reddit_tasks import FAR_FUTURE
+    since = 1117584000                                           # 2005-06-01
+    now = 1_790_000_000                                          # Sep 2026
+    w = queries.year_windows(since, FAR_FUTURE, 3, now=now)
+    assert w[0][0] <= since and w[-1][1] == FAR_FUTURE
+    assert all(b <= a2 + 2 for (_, b), (a2, _) in zip(w, w[1:]))   # contiguous (1 s overlap at most)
+    assert queries.year_windows(since, FAR_FUTURE, 3, now=now + 86400) == w   # stable within the same period
+    assert queries.year_windows(since, FAR_FUTURE, 0, now=now) == [(since, FAR_FUTURE)]
+    recent = queries.year_windows(1_700_000_000, FAR_FUTURE, 3, now=now)       # short history -> a single window
+    assert len(recent) == 1 and recent[0][1] == FAR_FUTURE
+
+
+def test_arctic_shift_budget_comments_are_few_and_windowed_posts_are_wide(tmp_path):
+    from collections import Counter
+    from wbscraper.sources.reddit_tasks import FAR_FUTURE
+    settings = make_settings(tmp_path)
+    tasks = [t for t in queries.plan_reddit_tasks(lib(), settings) if t[3] == "reddit_arcticshift"]
+    comments = [t for t in tasks if t[1]["kind"] == "comments"]
+    posts = [t for t in tasks if t[1]["kind"] == "posts"]
+    tier1 = set(lib().subreddits["tier1"])
+    assert comments and all(t[1]["subreddit"] in tier1 for t in comments)         # comment text search only for tier 1
+    per_pair = Counter((t[1]["subreddit"], t[1]["q"]) for t in comments)
+    assert max(per_pair.values()) > 1                                              # pre-split into several windows
+    assert all(t[1]["before"] - t[1]["after"] < 3 * 366 * 86400 + 10 or t[1]["before"] == FAR_FUTURE for t in comments)
+    assert all(t[1]["before"] == FAR_FUTURE and t[1]["after"] == settings.since_ts for t in posts)
+    newest_first = [t for t in comments if t[1]["subreddit"] == "Wastewater" and t[1]["q"] == comments[0][1]["q"]]
+    assert [t[2] for t in newest_first] == sorted((t[2] for t in newest_first), reverse=True)
+
+
+def test_settings_lookup_handles_yaml_integer_keys(tmp_path):
+    s = make_settings(tmp_path)
+    assert s.get("reddit.anchors_per_subreddit.comments.1") == 8 and s.get("reddit.anchors_per_subreddit.posts.3") == 6

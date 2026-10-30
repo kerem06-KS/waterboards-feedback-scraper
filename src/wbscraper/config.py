@@ -64,9 +64,14 @@ class Settings:
     def get(self, dotted: str, default: Any = None) -> Any:
         cur: Any = self.raw
         for part in dotted.split("."):
-            if not isinstance(cur, dict) or part not in cur:
+            if not isinstance(cur, dict):
                 return default
-            cur = cur[part]
+            if part in cur:
+                cur = cur[part]
+            elif part.isdigit() and int(part) in cur:      # YAML integer keys (e.g. tier numbers)
+                cur = cur[int(part)]
+            else:
+                return default
         return cur
 
     # convenient paths -------------------------------------------------

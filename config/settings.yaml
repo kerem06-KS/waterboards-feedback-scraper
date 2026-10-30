@@ -57,10 +57,13 @@ reddit:
   max_discovered_subreddits: 60
   discovery_results: 15       # search-engine results requested per query
   lookup_batch: 50            # post ids per lookup request
-  anchors_per_subreddit:      # max search anchors per subreddit, by subreddit tier (tier1 = most relevant subs)
-    1: 80
-    2: 40
-    3: 15
+  # Arctic Shift's comment text search is slow (it times out on wide date ranges even in small subreddits), while its
+  # post search and thread reads are cheap. So: many post anchors, few comment anchors, and comment searches run in
+  # pre-split windows (newest first). Comments in relevant threads are still collected by thread expansion.
+  anchors_per_subreddit:      # max anchors per subreddit tier (1 = most relevant subreddits)
+    posts:    { 1: 40, 2: 15, 3: 6 }
+    comments: { 1: 8,  2: 0,  3: 0 }
+  comment_window_years: 3     # width of the pre-split windows for subreddit comment searches (0 = one wide window)
   url_prefixes:               # link posts pointing at Water Boards sites (Arctic Shift url prefix search)
     - "https://www.waterboards.ca.gov"
     - "https://waterboards.ca.gov"

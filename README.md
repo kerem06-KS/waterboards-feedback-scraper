@@ -199,6 +199,10 @@ wbscraper run --enable youtube      # in addition to the default sources
 
 * PullPush and Arctic Shift are volunteer-run archives with no uptime guarantee; their coverage of recent content
   can lag, and deleted/removed posts are gone. `wbscraper report` flags a provider whose newest record looks stale.
+* Arctic Shift's comment text search is slow and times out on wide date ranges (measured 2026-10-29), so
+  subreddit comment searches use pre-split 3-year windows and a small anchor budget (`reddit.anchors_per_subreddit`,
+  `reddit.comment_window_years` in `config/settings.yaml`); comments inside relevant threads are collected by thread
+  expansion regardless, which is fast.
 * Search-engine discovery (`ddgs`) is unofficial and may be throttled; it is deliberately slow.
 * Many recent Water Boards comment letters are released only on request by e-mail, scanned letters need OCR (not
   implemented), and compiled response documents are skipped by design.

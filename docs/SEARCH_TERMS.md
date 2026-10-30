@@ -21,7 +21,9 @@ planned query to a file with `wbscraper terms --dump plan.tsv`.
   add system-specific phrases (`GeoTracker upload`, `SMARTS annual report`). Subsumed phrases are dropped for
   subreddit searches (searching `GeoTracker` already returns `GeoTracker upload`), except ambiguous acronyms.
 * **PullPush** receives only single distinctive tokens because its text search is fuzzy.
-* **Arctic Shift** gets anchors per subreddit, capped by subreddit tier (`reddit.anchors_per_subreddit`).
+* **Arctic Shift** gets anchors per subreddit, capped by subreddit tier and kind (`reddit.anchors_per_subreddit`). Its
+  post search is cheap, so posts get many anchors over one wide window; its comment text search is slow (it times out
+  on wide ranges), so comments get few anchors, only in tier-1 subreddits, in pre-split 3-year windows, newest first.
 * **Search engines** get quoted anchors, anchor × modifier combinations (`"CIWQS" login problem`) and the
   natural-language questions, each prefixed with `site:reddit.com` for Reddit discovery.
 * **No exact name required.** Topic phrases ("operator certification renewal", "WDID", "Construction General

@@ -6,7 +6,9 @@ search engines get quoted anchors, modifier combinations and natural-language qu
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from .db import Database
 from .sources.reddit_tasks import FAR_FUTURE
@@ -114,6 +116,28 @@ def web_queries(lib: TermLibrary, prefix: str = "") -> list[tuple[int, str]]:
     return sorted(((t, q) for q, t in out.items()), key=lambda x: (x[0], x[1]))
 
 
+def year_windows(since: int, until: int, years: int, now: float | None = None) -> list[tuple[int, int]]:
+    """Calendar-aligned (after, before) windows of `years` years from `since`; the last one is open-ended up to `until`.
+    Boundaries depend only on `since`, so task keys stay stable between runs (resume never repeats finished windows)."""
+    horizon = min(int(now if now is not None else time.time()), until)
+    if years <= 0:
+        return [(since, until)]
+    out: list[tuple[int, int]] = []
+    d = datetime.fromtimestamp(since, tz=timezone.utc)
+    while True:
+        lo = int(d.timestamp())
+        if lo >= horizon:
+            break
+        nxt = d.replace(year=d.year + years, day=min(d.day, 28))
+        hi = int(nxt.timestamp())
+        if hi >= horizon:
+            out.append((lo - 1, until))
+            break
+        out.append((lo - 1, hi + 1))
+        d = nxt
+    return out or [(since, until)]
+
+
 def subreddit_tiers(lib: TermLibrary) -> list[tuple[int, str]]:
     subs = lib.subreddits or {}
     out, seen = [], set()
@@ -155,16 +179,24 @@ def plan_reddit_tasks(lib: TermLibrary, settings, *, since: int | None = None, e
             tasks.append(("reddit_search", {**base, "kind": "posts", "q": tok, "subreddit": None}, 630, "reddit_pullpush"))
             tasks.append(("reddit_search", {**base, "kind": "comments", "q": tok, "subreddit": None}, 625, "reddit_pullpush"))
 
-    # 3) subreddit-scoped search (Arctic Shift), curated subreddits x anchors
+    # 3) subreddit-scoped search (Arctic Shift), curated subreddits x anchors. Posts: one wide window (cheap).
+    #    Comments: slow full-text search, so few anchors, pre-split windows, newest window first.
     if enabled.get("reddit_arcticshift", True):
         max_anchor_tier = {1: 3, 2: 2, 3: 1}
+        windows = year_windows(since, until, int(settings.get("reddit.comment_window_years", 3)))
         for sub_tier, sub in subreddit_tiers(lib):
-            cap = int(settings.get(f"reddit.anchors_per_subreddit.{sub_tier}", 40))
-            for a in compact(lib, anchors(lib, max_tier=max_anchor_tier[sub_tier]))[:cap]:
+            post_cap = int(settings.get(f"reddit.anchors_per_subreddit.posts.{sub_tier}", 40))
+            comment_cap = int(settings.get(f"reddit.anchors_per_subreddit.comments.{sub_tier}", 0))
+            ranked = compact(lib, anchors(lib, max_tier=max_anchor_tier[sub_tier]))
+            for a in ranked[:post_cap]:
                 pri = 600 - 40 * (sub_tier - 1) - 20 * (a.tier - 1)
-                for kind, bump in (("posts", 0), ("comments", -1)):
-                    tasks.append(("reddit_search", {**base, "kind": kind, "q": a.text, "subreddit": sub}, pri + bump,
-                                  "reddit_arcticshift"))
+                tasks.append(("reddit_search", {**base, "kind": "posts", "q": a.text, "subreddit": sub}, pri,
+                              "reddit_arcticshift"))
+            for a in ranked[:comment_cap]:
+                pri = 590 - 40 * (sub_tier - 1) - 20 * (a.tier - 1)
+                for wi, (lo, hi) in enumerate(reversed(windows)):          # newest window first
+                    tasks.append(("reddit_search", {**base, "after": lo, "before": hi, "kind": "comments", "q": a.text,
+                                                    "subreddit": sub}, pri - min(wi, 8), "reddit_arcticshift"))
 
     # 4) search-engine discovery of Reddit threads
     if enabled.get("reddit_discovery", True):
