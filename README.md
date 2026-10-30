@@ -215,9 +215,12 @@ wbscraper run --enable youtube      # in addition to the default sources
 
 ## Troubleshooting
 
-* **`wbscraper: command not found` / `No module named wbscraper`** — activate the virtualenv first. On macOS with
-  Python 3.13+, if the project folder is flagged "hidden" by the OS, the editable install can be ignored; run
-  `chflags nohidden .venv/lib/python*/site-packages/*.pth` or install non-editable with `pip install .`.
+* **`ModuleNotFoundError: No module named 'wbscraper'` / `command not found`** — activate the virtualenv first. If it
+  still fails on macOS, the OS has probably marked the editable-install file as *hidden* (Python 3.13+ ignores hidden
+  `.pth` files; this happens in iCloud-synced folders such as Desktop and Documents). Quick fix:
+  `chflags nohidden .venv/lib/python*/site-packages/*.pth`. Lasting fix: keep the virtualenv outside synced folders,
+  e.g. `python3 -m venv ~/.venvs/wbscraper && source ~/.venvs/wbscraper/bin/activate && pip install -e ".[dev]"`.
+  Last resort without any install: `PYTHONPATH=src python -m wbscraper run`.
 * **Lots of `deferred` tasks / `restricted`** — a provider is down or throttling. This is normal; work is retried and
   fallbacks are used. Check `data/logs/` and `wbscraper report`.
 * **Nothing found from one provider** — run `wbscraper check`; the archives sometimes answer 502/429 for hours.
