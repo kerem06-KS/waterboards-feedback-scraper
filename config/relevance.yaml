@@ -1,21 +1,24 @@
-# Rule-based relevance scoring. Scores add up; the tier is decided by the thresholds.
-thresholds:
-  relevant: 4.0      # exported by default
-  borderline: 2.5    # stored and counted; exported only with --include-borderline
-
+# Two-stage relevance (see src/wbscraper/relevance.py and docs/SEARCH_TERMS.md).
+#   Stage 1: the text itself must establish a California Water Boards connection (system, organisation, or a
+#            programme term together with a California / Water Boards qualifier).
+#   Stage 2: it must show evidence of using a website, portal or online process (config/terms/signals.yaml).
+# The tier comes from these rules, not from a score threshold; the weights below only make `score` a useful
+# sort key for reviewing items.
 weights:
-  entity_strong: 3.0         # unambiguous system / org name or Water Boards domain
-  entity_weak_with_context: 2.5
-  entity_weak_no_context: 0.5
-  topic_default: 1.5         # topic phrases ("operator certification renewal") need other signals to matter
-  digital_first: 1.5         # first distinct digital/technical/UX/process term
-  digital_additional: 0.5
-  digital_cap: 2.5
-  experience_first: 0.5      # complaints, praise, questions
-  experience_additional: 0.25
-  experience_cap: 1.0
-  california_context: 1.0    # only applied when an entity/topic or digital signal exists
-  thread_context: 2.5        # comment inside a thread already judged relevant
-  policy_only_penalty: -1.0  # organisation-only mention with no digital/service signal
-  max_penalty: -6.0
-  no_anchor_cap: 1.0         # no entity, no topic and no thread context -> total capped here
+  system: 3.0
+  system_weak: 2.5      # ambiguous name that appeared together with its required context words
+  org: 3.0
+  org_weak: 2.0
+  program: 1.5
+  usability: 1.5        # per distinct interface term (website, portal, login, upload, ...), up to usability_cap
+  usability_cap: 2
+  process: 0.5
+  process_cap: 2
+  experience: 0.5
+  experience_cap: 2
+  california: 0.5
+  thread_exception: 1.0
+  hard_negative: 4.0    # look-alike patterns with at least this penalty reject the item outright
+
+retired_queries:      # pending searches for these exact queries are cancelled by `wbscraper rescore`
+  - WDID

@@ -25,3 +25,7 @@ negatives:
     pattern: '\b(wake ?board|kite ?board|paddle ?board|skim ?board|surf ?board)\b'
     penalty: 2
     unless_context: ["@water_reg"]
+  # news / outreach boilerplate: agency announcements are not user feedback about using a site
+  - id: promo_boilerplate
+    pattern: '\b(click|tap) (here )?to (read|learn|see|view|find out)\b|\blearn more here\b|\bread more here\b|\b(making|makes|make) it (much |even )?(easier|simpler)\b|\bregister (now )?for (the |our )?(webinar|workshop|training|info session|information session)\b'
+    penalty: 2

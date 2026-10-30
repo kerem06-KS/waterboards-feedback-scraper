@@ -11,6 +11,7 @@ src/wbscraper/
   runner.py                single-threaded loop: pick -> execute -> commit; stop conditions; Ctrl+C
   pipeline.py              redact -> score -> dedupe -> store, one place for all filtering
   relevance.py redact.py dates.py textutil.py htmltext.py robots.py export.py report.py rescore.py progress.py stats.py
+                           (relevance.py: two-stage classifier; rescore.py: reclassify + prune stale work)
   sources/
     base.py                RawItem, Page, exceptions
     reddit_provider.py     provider interface + page helpers
@@ -47,27 +48,48 @@ any entity hit, which stops fuzzy archives from paging through junk. A provider 
 ### Thread expansion
 
 A post that is relevant on its own, or a comment that is, marks its thread relevant and queues a full read of the
-thread (`comments/search?link_id=` paged by time, or PullPush `link_id`). Comments are scored with a thread-context
-bonus, so a reply such as "the upload kept timing out for me too" qualifies without naming the system. If a thread
-only becomes relevant midway through its own expansion, it is rescanned once. Threads surfaced by search engines are
-expanded at lower priority.
+thread (`comments/search?link_id=` paged by time, or PullPush `link_id`). Replies are then judged with the *narrow
+thread exception* (below): a reply such as "the upload kept timing out for me too" qualifies without naming the
+system, but "thanks, that worked" or an off-topic aside does not, however relevant the thread is. Only items that are
+relevant on their own merits can flag a thread. If a thread only becomes relevant midway through its own expansion,
+it is rescanned once. Threads surfaced by search engines are expanded at lower priority.
 
-## Relevance scoring
+## Relevance classification
 
-`score = anchor + digital + experience + california + thread − penalties` (weights in `config/relevance.yaml`):
+Two stages, decided by rules rather than a score threshold (`relevance.py`; vocabulary in `config/terms/`):
 
-| Part | Value |
+**Stage 1, connection** - what the text itself says about the Water Boards:
+
+| Connection | Meaning |
 |---|---|
-| anchor | 3.0 strong system/org name or Water Boards domain; 2.5 ambiguous name with required context; topic phrase 1.5; 0.5 ambiguous name without context (not an anchor) |
-| digital | first technical/UX/process/digital term 1.5, +0.5 each further, cap 2.5 |
-| experience | complaint/praise/question wording 0.5, +0.25 each, cap 1.0 |
-| california | +1.0 when an anchor exists and a California context word appears |
-| thread | +2.5 for items inside a thread already judged relevant |
-| penalties | −1 organisation-only mention with no service signal; look-alike patterns (−2…−6) |
+| `system` | a named online system (SMARTS, GeoTracker, CIWQS, CalWATRS, …) or its domain |
+| `org` | State/Regional Water Boards, a division, a `waterboards.ca.gov` address |
+| `program` | a programme term (operator certification, stormwater jargon) *and* a California / Water Boards qualifier |
+| `implicit` | evidence outside the text (a link post's URL, a Water Boards GitHub repository, a URL-only mention) |
 
-No anchor and no thread context caps the score at 1.0. Tiers: ≥ 4.0 relevant (exported), ≥ 2.5 borderline (stored,
-counted, exported with `--include-borderline`), otherwise irrelevant (kept only if an entity matched, so rules can be
-tuned with `wbscraper rescore`).
+Ambiguous acronyms are case-sensitive and need context words (`config/terms/entities.yaml`).
+
+**Stage 2, usage** - evidence inside the same or neighbouring sentences (URLs ignored), from `signals.yaml`:
+**A** interface vocabulary (website, portal, login, upload, e-file, dropdown…), **B** process vocabulary (submit,
+renewal, account…), **C** experience wording, strong (error, confusing, "can't log in", how do I, easy…) or weak
+(great, how to, does anyone…).
+
+| Connection | relevant | borderline |
+|---|---|---|
+| system | any C with A or B, or two A | any A, B or C |
+| org / program | A and strong C | A, or B and C |
+| implicit | never | A and strong C |
+| none, thread already relevant | A with strong C, A with two B, or two A | A, or B and C |
+| none | never | never |
+
+Look-alike patterns (`negatives.yaml`) demote one tier; strong ones (penalty ≥ 4) reject outright. Items from the
+Water Boards' own GitHub repositories are capped at borderline. `score` in the database is only a sort key for review.
+Items with a connection but no usage evidence are kept (`entity_hit`) so edited rules can resurrect them with
+`wbscraper rescore`; items with no connection and no thread context are not stored at all.
+
+`wbscraper rescore` recomputes every stored item, rebuilds the thread flags, forgets auto-discovered subreddits that
+produced nothing relevant, and cancels *pending* tasks that existed only because of misclassified items (searches
+in those subreddits, thread reads, post look-ups, retired queries). Raw rows and finished tasks are never touched.
 
 ## Data handling
 

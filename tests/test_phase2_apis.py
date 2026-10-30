@@ -36,7 +36,7 @@ def test_stackexchange_full_flow(tmp_path):
     respx.get(url__regex=r".*/questions/101;102/comments(\?.*)?$").mock(return_value=se_page([
         {"comment_id": 301, "post_id": 101, "body": "Same problem here, the website is so slow.", "creation_date": 1700000600}]))
     respx.get(url__regex=r".*/answers/201/comments(\?.*)?$").mock(return_value=se_page([
-        {"comment_id": 302, "post_id": 201, "body": "Thanks, that worked!", "creation_date": 1700000700}]))
+        {"comment_id": 302, "post_id": 201, "body": "The upload still times out in Chrome for me.", "creation_date": 1700000700}]))
     run_all(app, clock)
     rows = {r["uid"]: r for r in app.db.conn.execute("SELECT * FROM items")}
     assert rows["se:gis:q101"]["tier"] == "relevant"
@@ -112,9 +112,9 @@ def test_github_org_issues_skip_staff_and_use_implicit_context(tmp_path):
          "issue_url": "https://api.github.com/repos/CAWaterBoardDataCenter/tool/issues/7", "author_association": "NONE"}]))
     run_all(app, clock)
     uids = {r["uid"]: r["tier"] for r in app.db.conn.execute("SELECT uid, tier FROM items")}
-    assert uids["gh:CAWaterBoardDataCenter/tool#7"] == "relevant"
+    assert uids["gh:CAWaterBoardDataCenter/tool#7"] == "borderline"        # repository context alone is never proof
     assert "gh:CAWaterBoardDataCenter/tool#8" not in uids                  # staff-authored: not public feedback
-    assert uids["gh:CAWaterBoardDataCenter/tool#c90"] in ("relevant", "borderline")
+    assert uids["gh:CAWaterBoardDataCenter/tool#c90"] in ("borderline", "irrelevant")
 
 
 @respx.mock

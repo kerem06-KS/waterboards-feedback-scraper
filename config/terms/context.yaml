@@ -11,14 +11,10 @@ groups:
     - "san diego"
     - fresno
     - "san francisco"
-    - oakland
     - "central valley"
     - "central coast"
     - "inland empire"
-    - "orange county"
     - lahontan
-    - "santa ana"
-    - "north coast"
     - "in ca"
     - ", ca"
     - "ca water"
@@ -52,16 +48,13 @@ groups:
     - cgp
     - "industrial general permit"
     - igp
-    - "annual report"
     - "water board"
     - waterboards
     - qsd
     - qsp
     - wdid
     - npdes
-    - bmp
     - discharger
-    - "construction site"
     - "ms4"
   geotracker_ctx:
     - ust
@@ -79,46 +72,33 @@ groups:
     - "water board"
     - waterboards
     - "regional board"
-    - consultant
     - "site assessment"
     - "phase ii"
     - "phase i"
     - "lab report"
     - "electronic deliverable"
     - "case closure"
-    - boring
     - "soil"
     - "contamination"
     - "swrcb"
   operator_ctx:
     - operator
-    - certification
-    - certificate
     - wastewater
     - "water treatment"
     - distribution
-    - "grade"
-    - renewal
     - "continuing education"
     - ceu
-    - exam
     - "water board"
     - waterboards
     - "state water"
   financial_ctx:
     - srf
-    - grant
-    - loan
-    - funding
     - "financial assistance"
     - "drinking water"
     - "clean water"
     - "water board"
     - waterboards
-    - application
   lab_ctx:
-    - laboratory
-    - lab
     - accreditation
     - "environmental laboratory"
     - nelap
@@ -127,9 +107,6 @@ groups:
   groundwater_ctx:
     - groundwater
     - "ground water"
-    - aquifer
-    - well
-    - gama
     - "water board"
   water_rights_ctx:
     - "water right"
@@ -141,3 +118,38 @@ groups:
     - "water board"
     - waterboards
     - reporting
+  waterboard_names:
+    - "water board"
+    - "water boards"
+    - waterboards
+    - swrcb
+    - rwqcb
+    - "regional board"
+    - "regional boards"
+    - calepa
+    - "cal/epa"
+  water_quality_ctx:
+    - "water quality"
+    - npdes
+    - wdr
+    - "waste discharge"
+    - "discharge permit"
+    - "general permit"
+    - stormwater
+    - "storm water"
+    - wastewater
+    - "waste water"
+  stormwater_core:
+    - stormwater
+    - "storm water"
+    - swppp
+    - noi
+    - "construction general permit"
+    - "industrial general permit"
+    - cgp
+    - igp
+    - npdes
+    - "water board"
+    - waterboards
+    - smarts
+    - "legally responsible"

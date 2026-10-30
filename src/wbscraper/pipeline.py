@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 
 from .db import Database
-from .relevance import RelevanceScorer, Score
+from .relevance import RelevanceScorer, Score, cap_tier
 from .sources.base import RawItem
 from .stats import RunStats
 from .textutil import clean_text, is_deleted, looks_like_bot, text_hash
@@ -44,9 +44,9 @@ class Pipeline:
 
         text = self.redactor(text)
         thread_flag = self.db.thread_relevant(raw.thread_uid)
-        scoring_text = f"{text}\n{raw.score_hint}" if raw.score_hint else text
-        own = self.scorer.score(scoring_text, thread_relevant=False)
-        final: Score = self.scorer.score(scoring_text, thread_relevant=True) if thread_flag else own
+        own = cap_tier(self.scorer.score(text, thread_relevant=False, hint=raw.score_hint), raw.tier_cap)
+        final: Score = cap_tier(self.scorer.score(text, thread_relevant=True, hint=raw.score_hint), raw.tier_cap) \
+            if thread_flag else own
         self.stats.candidates += 1
 
         if final.tier == "irrelevant" and not final.entity_hit:

@@ -48,6 +48,36 @@ def export_csv(db, path: str | Path, *, include_borderline: bool = False, min_ch
     return ExportResult(path, len(rows), tiers)
 
 
+REVIEW_HEADER = ["text", "date", "source_url", "review_note"]
+
+
+def export_review_csv(db, path: str | Path, *, min_chars: int = 12) -> int:
+    """Borderline items for manual review, kept apart from the deliverable CSV. This is a local aid: it adds a
+    `review_note` column (which rule fired), so it is never the file to hand over. Returns the number of rows."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = db.conn.execute(
+        "SELECT text, date, url, reasons FROM items WHERE tier='borderline' AND length(text) >= ? "
+        "AND COALESCE(flags,'') NOT LIKE '%agency_doc%' ORDER BY COALESCE(date,'9999'), url", (min_chars,)).fetchall()
+    fd, tmp = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
+            w = csv.writer(fh, quoting=csv.QUOTE_ALL, lineterminator="\n")
+            w.writerow(REVIEW_HEADER)
+            for r in rows:
+                try:
+                    note = "; ".join(json.loads(r["reasons"] or "[]"))
+                except ValueError:
+                    note = ""
+                w.writerow([r["text"], r["date"] or "", r["url"], note])
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+    return len(rows)
+
+
 def write_manifest(db, settings, csv_result: ExportResult, term_files: list[Path]) -> Path:
     """Reproducible record of collection settings; kept apart from the CSV so the CSV stays three columns."""
     hashes = {}

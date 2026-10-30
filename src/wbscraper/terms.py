@@ -87,6 +87,7 @@ class TermLibrary:
     subreddits: dict[str, list[str]]
     relevance: dict
     forums: dict = field(default_factory=dict)
+    signals: dict[str, list[str]] = field(default_factory=dict)
     regexes: dict[str, re.Pattern | None] = field(default_factory=dict)
 
     # -- context helpers ---------------------------------------------------------------
@@ -151,11 +152,11 @@ class TermLibrary:
                 when=re.compile(n["when"], re.IGNORECASE) if n.get("when") else None,
                 unless=lib.context_regex(n.get("unless_context", [])) if n.get("unless_context") else None))
 
-        digital = (modifiers.get("technical_issue", []) + modifiers.get("ux", []) +
-                   modifiers.get("digital_nouns", []) + modifiers.get("process_delay", []))
-        lib.regexes["digital"] = phrase_regex(digital, inflect=True)
-        lib.regexes["experience"] = phrase_regex(
-            modifiers.get("experience_negative", []) + modifiers.get("experience_positive", []) +
-            modifiers.get("experience_question", []), inflect=True)
+        # Stage-2 vocabulary (config/terms/signals.yaml). The query modifiers above are for building searches only.
+        signals = load_yaml(terms_dir / "signals.yaml") or {}
+        lib.signals = {k: list(v or []) for k, v in signals.items()}
+        for name in ("usability", "process", "experience", "experience_weak"):
+            lib.regexes[name] = phrase_regex(lib.signals.get(name, []), inflect=True)
         lib.regexes["california"] = lib.context_regex(["@california"])
+        lib.regexes["ca_connection"] = lib.context_regex(["@california", "@waterboard_names"])
         return lib

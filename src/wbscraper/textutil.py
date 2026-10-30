@@ -13,6 +13,9 @@ _BOT_PATTERNS = (
     re.compile(r"^\*\*?this is an automated (message|reminder)", re.I),
     re.compile(r"^your (post|submission|comment) has been removed", re.I),
     re.compile(r"^hello! (your|this) (post|submission)", re.I),
+    re.compile(r"i am a bot whose sole purpose", re.I),
+    re.compile(r"^this (submission|post) has been removed from /?r/", re.I),
+    re.compile(r"^\*\*?(please )?read the rules", re.I),
 )
 
 

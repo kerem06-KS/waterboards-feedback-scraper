@@ -69,7 +69,7 @@ wbscraper run
 | `wbscraper report` | Coverage report: which providers worked, failed, were restricted, unique threads per method. |
 | `wbscraper sources` | List the source adapters and whether each is active. |
 | `wbscraper terms` | Preview the generated search queries offline (`--dump plan.tsv` writes them all). |
-| `wbscraper rescore` | Re-apply edited relevance rules to everything already collected (no network). |
+| `wbscraper rescore` | Re-apply the relevance rules to everything already collected (no network): reclassifies, cancels pending work that only existed because of earlier misclassifications, and regenerates both CSVs. Never deletes collected rows or resets finished tasks. |
 | `wbscraper check` | One small request per provider to confirm connectivity. |
 | `pytest` | Run the test suite (fully mocked; never touches the network). |
 
@@ -136,17 +136,32 @@ data/logs/run-*.log                    <- detailed logs and errors (the terminal
 
 ## Relevance filtering (no paid AI)
 
-Scoring is rule-based and fully configurable (`config/relevance.yaml`, `config/terms/*.yaml`):
+Classification is rule-based, two-stage and fully configurable (`config/relevance.yaml`, `config/terms/*.yaml`).
+An item reaches the CSV only if **both** stages pass on its own text:
 
-* an **anchor** — a system/organisation name, a Water Boards domain, or a topic phrase such as "operator
-  certification renewal" — is required, *or* the item must sit inside a thread that already contains a relevant item;
-* ambiguous names (`SMARTS`, `GeoTracker`, `OCIS`, `FAAST`, `ELAP`, "water board") only count when supporting
-  context is present, and look-alikes are penalised (GPS/SEO "GeoTracker" apps, the SMARTS solar model, waterboarding,
-  other countries' water boards);
-* technical, usability and process vocabulary (login, upload failed, confusing, processing time, accessibility…) and
-  complaint/praise/question wording add to the score, so positive and neutral feedback is kept too;
-* **relevant** items are exported; **borderline** ones are stored and counted in every summary
-  (`wbscraper export --include-borderline` includes them) so nothing is silently discarded.
+1. **Connection to the California Water Boards.** A named Water Boards system (SMARTS, GeoTracker, CIWQS, CalWATRS…),
+   the State/Regional Boards or a division, a `waterboards.ca.gov` address, or a programme term (operator
+   certification, stormwater permit jargon) together with a California / Water Boards qualifier. Ambiguous names
+   (`SMARTS`, `WDID`, `eSMR`, `GeoTracker`, `OCIS`, `FAAST`, `ELAP`, "water board") count only in the right case and
+   with their supporting words, and look-alikes are rejected (GPS/SEO "GeoTracker" apps, the SMARTS solar model,
+   `WDID` = "what do I do", ESMR music, waterboarding, other states' and countries' water boards).
+2. **Use of a website, portal or digital process.** Interface vocabulary (website, portal, login, upload, e-file,
+   dropdown…) next to experience wording (confusing, can't log in, how do I, easy…). Generic words such as "water",
+   "system", "error", "account" or "login" never qualify on their own. Both stages are judged inside the same or
+   neighbouring sentences, so a Water Boards mention cannot borrow "website" from an unrelated paragraph, and URL
+   text is ignored.
+
+A reply inside a thread that is *already* established as relevant needs no connection of its own, but must itself
+talk about the interface ("the upload kept timing out for me too"). "Thanks, that worked!" does not qualify.
+Context that is only implied (a link to the site, a Water Boards GitHub repository) can never make an item
+relevant by itself.
+
+* **relevant** items are exported to `waterboards_feedback.csv` (exactly `text,date,source_url`);
+* **borderline** items (a connection but thin or neutral usage evidence) are stored and written to a separate
+  `borderline_review.csv` for manual review (it adds a `review_note` column, so it is *not* the deliverable);
+  `wbscraper export --include-borderline` adds them to the main CSV if you decide to;
+* everything else stays in the SQLite database (`items.tier = irrelevant`) so rules can be tuned later without
+  re-collecting.
 
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Query library: [docs/SEARCH_TERMS.md](docs/SEARCH_TERMS.md).
 

@@ -33,6 +33,7 @@ class RawItem:
     title: str | None = None
     score: float | None = None
     score_hint: str = ""          # extra evidence used only for relevance scoring (e.g. a link post's URL); never stored
+    tier_cap: str = ""            # highest tier this item may reach ("borderline": kept for review only)
 
 
 @dataclass

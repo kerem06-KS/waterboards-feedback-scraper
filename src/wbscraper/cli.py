@@ -15,7 +15,7 @@ from rich.table import Table
 from . import __version__, queries
 from .app import REDDIT_SOURCE_NAMES, SOURCE_NAMES, App, build_app
 from .config import Settings, deep_merge, load_dotenv, load_settings
-from .export import export_csv, write_manifest
+from .export import export_csv, export_review_csv, write_manifest
 from .progress import Dashboard, print_summary
 from .report import build_report
 from .rescore import rescore_all
@@ -70,6 +70,8 @@ def _do_export(app: App, include_borderline: bool | None = None, excel: bool = F
     res = export_csv(app.db, path, include_borderline=bool(ib),
                      min_chars=int(app.settings.get("export.min_text_chars", 12)), excel=excel)
     write_manifest(app.db, app.settings, res, app.term_files())
+    export_review_csv(app.db, res.path.with_name("borderline_review.csv"),
+                      min_chars=int(app.settings.get("export.min_text_chars", 12)))
     return res
 
 
@@ -171,7 +173,12 @@ def cmd_rescore(args) -> int:
     settings = _settings(args)
     app = build_app(settings)
     try:
-        console.print(rescore_all(app.db, app.scorer))
+        retired = list((app.lib.relevance or {}).get("retired_queries") or [])
+        res = rescore_all(app.db, app.scorer, retired_queries=retired)
+        console.print(res)
+        exp = _do_export(app)
+        console.print(f"Regenerated {exp.path} ({exp.rows} relevant rows); borderline items for review are in "
+                      f"{exp.path.with_name('borderline_review.csv')}")
     finally:
         app.close()
     return 0

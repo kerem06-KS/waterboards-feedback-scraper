@@ -68,7 +68,8 @@ class GitHubHandler(ApiHandler):
         body = (it.get("body") or "").strip()
         return RawItem(uid=f"gh:{repo}#{it['number']}", source="github", kind="post", url=url,
                        text=f"{title}\n\n{body}".strip() if body else title, date=to_iso(it.get("created_at")),
-                       thread_uid=f"gh:{repo}#{it['number']}", community=repo, title=title, score_hint=implicit)
+                       thread_uid=f"gh:{repo}#{it['number']}", community=repo, title=title, score_hint=implicit,
+                       tier_cap="borderline" if implicit else "")
 
     def _comment_raw(self, c: dict, *, implicit: str = "") -> RawItem | None:
         if (c.get("author_association") or "").upper() in self.skip_assoc and implicit:
@@ -80,7 +81,7 @@ class GitHubHandler(ApiHandler):
         return RawItem(uid=f"gh:{repo}#c{c['id']}", source="github", kind="comment", url=url,
                        text=(c.get("body") or "").strip(), date=to_iso(c.get("created_at")),
                        thread_uid=f"gh:{repo}#{number}", parent_uid=f"gh:{repo}#{number}", community=repo,
-                       score_hint=implicit)
+                       score_hint=implicit, tier_cap="borderline" if implicit else "")
 
     # -- tasks -----------------------------------------------------------------------------------
     def _run_gh_org_repos(self, p: dict, priority: int):

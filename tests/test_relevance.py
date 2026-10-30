@@ -53,9 +53,9 @@ def test_comment_in_relevant_thread_qualifies_without_naming_the_system(scorer):
     assert scorer.score(text, thread_relevant=True).tier == "relevant"
 
 
-def test_thread_context_alone_is_only_borderline(scorer):
-    s = scorer.score("Thanks, that worked!", thread_relevant=True)
-    assert s.tier == "borderline"
+def test_thread_context_alone_is_not_enough(scorer):
+    for text in ("Thanks, that worked!", "same here", "I agree with you, my husband did the same"):
+        assert scorer.score(text, thread_relevant=True).tier == "irrelevant", text
 
 
 def test_generic_complaint_without_any_anchor_is_capped(scorer):
@@ -63,8 +63,9 @@ def test_generic_complaint_without_any_anchor_is_capped(scorer):
     assert s.total <= 1.0 and s.tier == "irrelevant"
 
 
-def test_system_name_alone_is_borderline(scorer):
-    assert scorer.score("CIWQS").tier == "borderline"
+def test_system_name_alone_is_kept_for_review_but_not_exported(scorer):
+    s = scorer.score("CIWQS")
+    assert s.tier == "irrelevant" and s.entity_hit        # stored (entity hit) so rule changes can resurrect it
 
 
 def test_acronym_collision_needs_case_and_context(scorer):
@@ -76,9 +77,3 @@ def test_acronym_collision_needs_case_and_context(scorer):
 def test_regional_board_names_are_recognised(scorer):
     s = scorer.score("The Central Valley Water Board portal is broken again")
     assert s.entity_hit and s.tier == "relevant"
-
-
-def test_thresholds_are_configurable():
-    lib = TermLibrary.load(REPO_CONFIG)
-    lib.relevance = {"thresholds": {"relevant": 3.0, "borderline": 2.0}}
-    assert RelevanceScorer(lib).score("CIWQS").tier == "relevant"

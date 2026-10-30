@@ -1,26 +1,100 @@
-"""Re-apply (edited) relevance rules to stored items without touching the network."""
+"""Re-apply (edited) relevance rules to stored items without touching the network.
+
+Raw collected rows are never deleted and completed tasks are never reset: only the classification columns of
+`items`, the relevance flag of `threads`, the list of auto-discovered subreddits and *pending* tasks that exist
+solely because of earlier misclassifications are changed.
+"""
 from __future__ import annotations
 
 import json
 
-from .relevance import RelevanceScorer
+from .relevance import RelevanceScorer, cap_tier
+
+# Evidence the live pipeline passes to the scorer next to the text (RawItem.score_hint). The hint itself is never
+# stored, so it is rebuilt from the row where it can be (GitHub issues in the Water Boards' own organisation).
+_GH_ORG_PREFIX = "CAWaterBoardDataCenter/"
+_GH_HINT = "waterboards.ca.gov California Water Boards"
 
 
-def rescore_all(db, scorer: RelevanceScorer) -> dict[str, int]:
+def score_hint(row) -> str:
+    if row["source"] == "github" and (row["community"] or "").startswith(_GH_ORG_PREFIX):
+        return f"{_GH_HINT} {row['community']}"
+    return ""
+
+
+def tier_cap(row) -> str:
+    return "borderline" if score_hint(row) else ""      # project repositories: review only, never exported
+
+
+def rescore_all(db, scorer: RelevanceScorer, *, prune: bool = True, retired_queries: list[str] | None = None) -> dict:
+    before = db.tier_counts()
     db.clear_thread_relevance()
-    rows = db.conn.execute("SELECT uid, thread_uid, kind, text FROM items").fetchall()
-    own: dict[str, bool] = {}
+    rows = db.conn.execute("SELECT uid, source, thread_uid, kind, community, text FROM items").fetchall()
+
+    # pass 1: what is relevant on its own merits? Only those items may make their thread relevant.
+    prev = {r["uid"]: r["tier"] for r in db.conn.execute("SELECT uid, tier FROM items")}
+    results = {}
     for r in rows:
-        s = scorer.score(r["text"], thread_relevant=False)
-        own[r["uid"]] = s.relevant
+        s = cap_tier(scorer.score(r["text"], thread_relevant=False, hint=score_hint(r)), tier_cap(r))
+        results[r["uid"]] = s
         if s.relevant and r["thread_uid"]:
-            db.upsert_thread(r["thread_uid"], "rescore", relevant=True)
-    changed = 0
+            db.upsert_thread(r["thread_uid"], r["source"] or "rescore", community=r["community"], relevant=True)
+
+    # pass 2: items in a relevant thread get the (narrow) thread exception; everything else keeps its own result
+    own = {uid: s.relevant for uid, s in results.items()}
     for r in rows:
-        flag = r["kind"] != "post" and db.thread_relevant(r["thread_uid"])
-        s = scorer.score(r["text"], thread_relevant=flag)
-        before = db.item_row(r["uid"])["tier"]
-        db.update_item_score(r["uid"], s.tier, int(own[r["uid"]]), s.total, int(s.entity_hit), json.dumps(s.reasons))
-        changed += before != s.tier
+        if not own[r["uid"]] and db.thread_relevant(r["thread_uid"]):
+            results[r["uid"]] = cap_tier(scorer.score(r["text"], thread_relevant=True, hint=score_hint(r)), tier_cap(r))
+    changed = 0
+    for uid, s in results.items():
+        db.update_item_score(uid, s.tier, int(own[uid]), s.total, int(s.entity_hit), json.dumps(s.reasons))
+        changed += prev[uid] != s.tier
     db.commit()
-    return {"items": len(rows), "tier_changes": changed, **db.tier_counts()}
+
+    out = {"items": len(rows), "tier_changes": changed, "before": before, "after": db.tier_counts()}
+    if prune:
+        out["pruned"] = prune_stale_work(db, retired_queries or [])
+    return out
+
+
+def prune_stale_work(db, retired_queries: list[str]) -> dict[str, int]:
+    """Cancel *pending* tasks that only exist because of items that are no longer relevant, and forget
+    auto-discovered subreddits that never produced a relevant item. Completed work is untouched."""
+    conn = db.conn
+    cancelled = {"discovered_subreddit_searches": 0, "thread_reads": 0, "post_lookups": 0, "retired_queries": 0}
+
+    good_subs = {r["community"].lower() for r in conn.execute(
+        "SELECT DISTINCT community FROM items WHERE own_relevant=1 AND community IS NOT NULL")}
+    raw = db.get_meta("discovered_subs")
+    discovered = json.loads(raw) if raw else []
+    keep = [s for s in discovered if s.lower() in good_subs]
+    dropped = {s.lower() for s in discovered} - {s.lower() for s in keep}
+    if dropped:
+        db.set_meta("discovered_subs", json.dumps(keep))
+
+    pending = conn.execute("SELECT id, type, payload FROM tasks WHERE status='pending'").fetchall()
+    relevant_threads = {r["thread_uid"] for r in conn.execute("SELECT thread_uid FROM threads WHERE relevant=1")}
+    search_discovered = {r["thread_uid"] for r in conn.execute("SELECT thread_uid FROM threads WHERE discovered=1")}
+    cancel: list[tuple[int, str]] = []
+    for t in pending:
+        p = json.loads(t["payload"])
+        if t["type"] == "reddit_search":
+            if (p.get("subreddit") or "").lower() in dropped:
+                cancel.append((t["id"], "discovered_subreddit_searches"))
+            elif p.get("q") in (retired_queries or []):
+                cancel.append((t["id"], "retired_queries"))
+        elif t["type"] == "reddit_thread":
+            tuid = f"reddit:t3_{p.get('post_id')}"
+            if tuid not in relevant_threads and tuid not in search_discovered:
+                cancel.append((t["id"], "thread_reads"))
+        elif t["type"] == "reddit_posts" and not p.get("discovered"):
+            tuids = [f"reddit:t3_{i}" for i in p.get("ids", [])]
+            if tuids and all(u not in relevant_threads and u not in search_discovered for u in tuids):
+                cancel.append((t["id"], "post_lookups"))
+    for tid, kind in cancel:
+        conn.execute("UPDATE tasks SET status='cancelled', last_error='cancelled by rescore: item no longer relevant',"
+                     " updated_at=? WHERE id=? AND status='pending'", (db.clock(), tid))
+        cancelled[kind] += 1
+    db.commit()
+    cancelled["subreddits_forgotten"] = len(dropped)
+    return cancelled

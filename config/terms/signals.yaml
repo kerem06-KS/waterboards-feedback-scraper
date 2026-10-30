@@ -1,0 +1,337 @@
+# Stage-2 vocabulary: evidence that an item is about *using* a website, portal or online process.
+# Matched case-insensitively on word boundaries (suffixes like -s/-ed/-ing are allowed).
+#
+# usability  (A) specific to web interfaces. Generic words ("account", "error", "system") never belong here.
+# process    (B) things people do in an online system. Too generic to count without a Water Boards system named.
+# experience (C) complaint / praise / question wording. Never sufficient on its own.
+# See docs/SEARCH_TERMS.md ("Relevance rules") for how A, B and C are combined.
+
+usability:
+  - website
+  - web site
+  - web page
+  - webpage
+  - web portal
+  - portal
+  - online system
+  - online form
+  - online application
+  - online filing
+  - online payment
+  - online portal
+  - online account
+  - online reporting
+  - online submission
+  - online submittal
+  - online database
+  - online tool
+  - apply online
+  - application online
+  - renew online
+  - renewal online
+  - submit online
+  - file online
+  - pay online
+  - register online
+  - fill out online
+  - fill it out online
+  - done online
+  - do it online
+  - web form
+  - web map
+  - web app
+  - web application
+  - e-file
+  - efile
+  - e-filing
+  - electronic submittal
+  - electronic submission
+  - electronic reporting
+  - electronically submit
+  - dashboard
+  - site search
+  - search function
+  - search bar
+  - interface
+  - user interface
+  - navigate
+  - site navigation
+  - navigation menu
+  - user friendly
+  - user-friendly
+  - intuitive
+  - clunky
+  - glitch
+  - glitchy
+  - login
+  - log in
+  - log-in
+  - logging in
+  - logged in
+  - log on
+  - sign in
+  - signing in
+  - sign-in
+  - upload
+  - uploads
+  - uploaded
+  - uploading
+  - drop-down
+  - dropdown
+  - drop down
+  - menu
+  - button
+  - toggle
+  - pop-up
+  - popup
+  - search box
+  - filter
+  - layers
+  - captcha
+  - 2fa
+  - two-factor
+  - verification code
+  - browser
+  - internet explorer
+  - chrome
+  - firefox
+  - safari
+  - timeout
+  - timed out
+  - timing out
+  - page not found
+  - 500 error
+  - server error
+  - not loading
+  - won't load
+  - website down
+  - site is down
+  - system is down
+  - is down
+  - outage
+  - under maintenance
+  - down for maintenance
+  - help desk
+  - helpdesk
+  - tech support
+  - technical support
+  - screen reader
+  - website accessibility
+  - accessible website
+  - mobile friendly
+  - mobile-friendly
+  - on my phone
+  - pdf only
+  - fillable pdf
+
+process:
+  - submit
+  - submitted
+  - submitting
+  - submission
+  - submittal
+  - file
+  - filed
+  - filing
+  - renew
+  - renewal
+  - register
+  - registration
+  - sign up
+  - apply
+  - application
+  - certify
+  - create an account
+  - account
+  - password
+  - username
+  - pin
+  - data entry
+  - enter data
+  - access
+  - look up
+  - lookup
+  - search
+  - download
+  - retrieve
+  - pay
+  - payment
+  - fee
+  - annual report
+  - form
+  - forms
+  - status
+
+experience:
+  # problems and difficulty, plus direct support questions. Organisation-only mentions need one of these.
+  - error
+  - errors
+  - bug
+  - buggy
+  - crash
+  - broken
+  - not working
+  - doesn't work
+  - does not work
+  - didn't work
+  - failed
+  - failing
+  - fails
+  - failure
+  - slow
+  - freezes
+  - frozen
+  - can't log in
+  - cannot log in
+  - unable to log in
+  - can't login
+  - cannot login
+  - unable to login
+  - can't sign in
+  - cannot sign in
+  - unable to sign in
+  - can't submit
+  - cannot submit
+  - unable to submit
+  - can't upload
+  - cannot upload
+  - unable to upload
+  - can't access
+  - cannot access
+  - unable to access
+  - can't find
+  - cannot find
+  - unable to find
+  - cannot figure
+  - unable to figure
+  - can't open
+  - cannot open
+  - unable to open
+  - can't reset
+  - cannot reset
+  - unable to reset
+  - can't register
+  - cannot register
+  - unable to register
+  - can't load
+  - cannot load
+  - unable to load
+  - can't get in
+  - cannot get in
+  - unable to get in
+  - can't see
+  - cannot see
+  - unable to see
+  - can't use
+  - cannot use
+  - unable to use
+  - can't pay
+  - cannot pay
+  - unable to pay
+  - can't download
+  - cannot download
+  - unable to download
+  - can't file
+  - cannot file
+  - unable to file
+  - won't let me
+  - won't load
+  - won't work
+  - won't accept
+  - won't submit
+  - won't upload
+  - won't open
+  - stuck on
+  - stuck in
+  - stuck at
+  - blank page
+  - blank
+  - does not load
+  - doesn't load
+  - never loads
+  - isn't loading
+  - not loading
+  - kicked out
+  - logs me out
+  - keeps logging
+  - timeout
+  - timed out
+  - timing out
+  - rejected
+  - denied
+  - confusing
+  - confused
+  - unclear
+  - frustrating
+  - frustrated
+  - nightmare
+  - ridiculous
+  - terrible
+  - awful
+  - horrible
+  - waste of time
+  - useless
+  - unacceptable
+  - annoying
+  - worst
+  - hate
+  - struggling
+  - problem
+  - problems
+  - trouble
+  - issue with
+  - issues with
+  - having issues
+  - had issues
+  - technical issue
+  - technical issues
+  - login issue
+  - login issues
+  - difficult
+  - hard to
+  - outdated
+  - archaic
+  - tedious
+  - cumbersome
+  - delayed
+  - still waiting
+  - no response
+  - never heard back
+  - never received
+  - not received
+  - easy
+  - easier
+  - straightforward
+  - smooth
+  - intuitive
+  - works well
+  - how do i
+  - how can i
+  - anyone else
+  - is it just me
+  - can't figure
+  - can't find
+  - cannot find
+
+# Weaker wording: enough to qualify a *named system* next to interface/process vocabulary, but never an
+# organisation-only mention on its own.
+experience_weak:
+  - great
+  - love
+  - worked
+  - fixed
+  - resolved
+  - responsive
+  - helpful
+  - improved
+  - how to
+  - has anyone
+  - does anyone
+  - anyone know
+  - is there a way
+  - any idea
+  - why is
+  - why does
+  - help with
+  - question
+  - confirm

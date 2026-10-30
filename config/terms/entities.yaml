@@ -33,9 +33,9 @@ entities:
       - waterboards.ca.gov
       - swrcb.ca.gov
     weak:
-      - { term: water boards, context: ["@california", "@water_reg"] }
-      - { term: water board, context: ["@california", "@water_reg", "permit", "certificate", "operator"] }
-      - { term: the state board, context: ["@water_reg"] }
+      # "water board" is also a Texas/UK/Dutch/Indian institution: California must be named
+      - { term: water boards, context: ["@california", "@waterboard_names"] }
+      - { term: water board, context: ["@california"] }
     domains: [waterboards.ca.gov, swrcb.ca.gov]
     anchors:
       1: [SWRCB, State Water Board, State Water Resources Control Board, California Water Boards, waterboards.ca.gov]
@@ -84,7 +84,7 @@ entities:
       - North Coast Water Board
       - San Francisco Bay Water Board
     weak:
-      - { term: regional board, context: ["@water_reg", "@california", "permit", "discharge"] }
+      - { term: regional board, context: ["@california", "@water_quality_ctx"] }
     anchors:
       1: [RWQCB, Regional Water Quality Control Board, Regional Water Board]
       2: [Central Valley Water Board, Los Angeles Regional Water Board, San Francisco Bay Regional Water Board, Santa Ana Regional Water Board, San Diego Regional Water Board, Lahontan Regional Water Board, Central Coast Regional Water Board, North Coast Regional Water Board, Colorado River Basin Regional Water Board]
@@ -103,6 +103,10 @@ entities:
       - Division of Financial Assistance
       - Office of Information Management and Analysis
       - Office of Operator Certification
+      - Drinking Water Operator Certification Program
+      - Wastewater Operator Certification Program
+      - DWOCP
+      - WWOCP
       - Delta Watermaster
     weak:
       - { term: DDW, case_sensitive: true, context: ["drinking water", "@water_reg"] }
@@ -192,15 +196,17 @@ entities:
       - CIWQS
       - California Integrated Water Quality System
       - ciwqs.waterboards.ca.gov
-      - eSMR
       - electronic self-monitoring report
       - electronic self monitoring report
+    weak:
+      # ESMR (all caps) is a music crew and a cardiac therapy: lower-case "e" + upper-case "SMR" and water wording required
+      - { term: eSMR, case_sensitive: true, context: ["@water_quality_ctx", "@waterboard_names", "ciwqs", "self-monitoring", "self monitoring", "monitoring report", "discharger"] }
     domains: [ciwqs.waterboards.ca.gov]
     anchors:
-      1: [CIWQS, California Integrated Water Quality System, ciwqs.waterboards.ca.gov, eSMR]
+      1: [CIWQS, California Integrated Water Quality System, ciwqs.waterboards.ca.gov, CIWQS eSMR]
       2: [CIWQS login, CIWQS spill, CIWQS SSO, CIWQS violation, CIWQS annual report, CIWQS online, CIWQS submitter, CIWQS password]
       3: [CIWQS error, CIWQS eSMR upload, CIWQS NOI, CIWQS regulated facility, CIWQS discharger]
-    pullpush: [CIWQS, ciwqs.waterboards.ca.gov, eSMR]
+    pullpush: [CIWQS, ciwqs.waterboards.ca.gov]   # eSMR removed: PullPush ignores case and returned ESMR music/medical posts
     tasks: [submit an eSMR, report a spill, submit an annual report, reset my password, find a violation report]
 
   - id: ocis
@@ -210,11 +216,6 @@ entities:
     strong:
       - Operator Certification Information System
       - wbapps.waterboards.ca.gov/opcert
-      - Drinking Water Operator Certification Program
-      - Wastewater Operator Certification Program
-      - DWOCP
-      - WWOCP
-      - Office of Operator Certification
     weak:
       - { term: OCIS, case_sensitive: true, context: ["@operator_ctx"] }
     domains: [wbapps.waterboards.ca.gov/opcert]
@@ -324,7 +325,7 @@ entities:
       - California Environmental Data Exchange Network
       - ceden.waterboards.ca.gov
     weak:
-      - { term: CEDEN, case_sensitive: true, context: ["@water_reg", "data", "monitoring"] }
+      - { term: CEDEN, case_sensitive: true, context: ["@water_reg", "water quality", "@waterboard_names"] }
     domains: [ceden.waterboards.ca.gov]
     anchors:
       1: [CEDEN, California Environmental Data Exchange Network, ceden.waterboards.ca.gov]
@@ -427,7 +428,6 @@ entities:
     kind: topic
     weight: 1.5
     strong:
-      - WDID
       - Construction General Permit
       - Industrial General Permit
       - stormwater annual report
@@ -439,14 +439,16 @@ entities:
       - Level 2 ERA
       - NEC exemption
     weak:
+      # WDID is also reddit slang for "what do I do": uppercase plus stormwater-permit wording required
+      - { term: WDID, case_sensitive: true, context: ["@stormwater_core"] }
       - { term: SWPPP, case_sensitive: true, context: ["california", "@water_reg"] }
       - { term: QSD, case_sensitive: true, context: ["california", "@stormwater"] }
       - { term: QSP, case_sensitive: true, context: ["california", "@stormwater"] }
     anchors:
       1: []
-      2: [WDID, Construction General Permit California, Industrial General Permit California, Legally Responsible Person stormwater]
+      2: [Construction General Permit California, Industrial General Permit California, Legally Responsible Person stormwater]
       3: [stormwater annual report California, SWPPP California upload, QSD QSP California]
-    pullpush: [WDID]
+    pullpush: []   # WDID removed: PullPush's fuzzy text search returned r/whatdoIdo and advice subreddits
 
   - id: wq_misc_topic
     label: Other Water Boards programs (topic)

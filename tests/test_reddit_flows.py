@@ -166,7 +166,7 @@ def test_relevant_comment_found_by_search_pulls_in_its_post_and_thread(tmp_path)
     assert "reddit:t1_c9" in ids and "reddit:t1_c10" in ids       # sibling comment kept through thread context
     assert any(c[0] == "posts_by_ids" for c in arc.calls)          # parent post fetched too
     parent = app.db.item_row("reddit:t3_p7")
-    assert parent is not None and parent["tier"] in ("borderline", "relevant")   # kept as thread context
+    assert parent is None or parent["tier"] != "relevant"           # a post with no interface evidence is not exported
 
 
 def test_thread_that_becomes_relevant_midway_is_rescanned(tmp_path):
