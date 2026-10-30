@@ -185,16 +185,16 @@ class Database:
         self.conn.commit()
         return cur.rowcount
 
-    def ready_tasks(self, now: float, limit: int = 300, per_family: int = 25) -> list[sqlite3.Row]:
-        """Highest-priority ready tasks, at most `per_family` from each task family.
+    def ready_tasks(self, now: float, limit: int = 1000, per_lane: int = 10) -> list[sqlite3.Row]:
+        """Highest-priority ready tasks, at most `per_lane` from each (family, task type) group.
 
-        Taking the top rows per family (instead of the global top N) keeps slow domains from hiding work that
-        belongs to other, currently idle domains, so different sites progress in parallel.
+        Taking the top rows per group (instead of the global top N) keeps a big backlog from hiding work that
+        belongs to other task types or currently idle domains, so every source stays visible to the scheduler.
         """
         return self.conn.execute(
-            "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY COALESCE(family,'') "
+            "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY COALESCE(family,''), type "
             "ORDER BY priority DESC, id ASC) AS rn FROM tasks WHERE status='pending' AND next_eligible_at<=?) "
-            "WHERE rn<=? ORDER BY priority DESC, id ASC LIMIT ?", (now, per_family, limit)).fetchall()
+            "WHERE rn<=? ORDER BY priority DESC, id ASC LIMIT ?", (now, per_lane, limit)).fetchall()
 
     def earliest_pending_eligible(self) -> float | None:
         row = self.conn.execute("SELECT MIN(next_eligible_at) AS m FROM tasks WHERE status='pending'").fetchone()

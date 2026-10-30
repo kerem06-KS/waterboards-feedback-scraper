@@ -1,4 +1,5 @@
-"""Main collection loop: one task at a time, highest priority first, domains paced independently.
+"""Main collection loop: one task at a time, fair between sources (lanes), priority-ordered inside each lane,
+domains paced independently.
 
 Stop conditions (no artificial sleeping): all work exhausted, max runtime reached, Ctrl+C, nothing ready for a long
 time after the minimum runtime (only retry-waiting work left), or no new relevant item for `stale_stop_minutes`.
@@ -15,6 +16,7 @@ from typing import Callable
 
 from .db import Database
 from .http import FetchError, HttpClient
+from .scheduler import FairLanes, lane_of
 from .sources.base import AllProvidersFailed
 from .stats import RunStats
 
@@ -45,6 +47,7 @@ class Runner:
         self.idle_stop_wait = float(rt.get("idle_stop_wait_seconds", 300))
         self.export_every = float(rt.get("export_every_minutes", 10)) * 60
         self.stale_stop = float(rt.get("stale_stop_minutes", 60)) * 60
+        self.lanes = FairLanes(((settings.get("scheduler", {}) or {}).get("weights")) or {})
         self._stop = False
         self._wait_hint = 0.0
 
@@ -70,25 +73,31 @@ class Runner:
 
     # ------------------------------------------------------------------ scheduling
     def _pick(self):
+        """Fair across lanes (sources), priority-ordered inside a lane; domains that are busy are skipped."""
         now = self.clock()
         shortest = float("inf")
-        for row in self.db.ready_tasks(now, 300):
-            handler = self.handlers.get(row["type"])
-            if handler is None:
-                self.db.retry_task(row["id"], f"no handler for {row['type']}", now + 86400, count_attempt=False)
-                continue
-            payload = json.loads(row["payload"])
-            domain = handler.next_domain(row["type"], payload)
-            if domain is None:
-                rem = handler.earliest_ready(row["type"], payload)
-                delay = 3600.0 if rem == float("inf") else rem + 1
-                self.db.retry_task(row["id"], "all providers cooling down or unavailable", now + delay,
-                                   count_attempt=False)
-                continue
-            wait = self.http.wait_needed(domain)
-            if wait <= 0:
-                return row, payload, handler
-            shortest = min(shortest, wait)
+        by_lane: dict[str, list] = {}
+        for row in self.db.ready_tasks(now):
+            by_lane.setdefault(lane_of(row["family"], row["type"]), []).append(row)     # rows arrive priority first
+        for lane in self.lanes.order({lane: rows[0]["priority"] for lane, rows in by_lane.items()}):
+            for row in by_lane[lane]:
+                handler = self.handlers.get(row["type"])
+                if handler is None:
+                    self.db.retry_task(row["id"], f"no handler for {row['type']}", now + 86400, count_attempt=False)
+                    continue
+                payload = json.loads(row["payload"])
+                domain = handler.next_domain(row["type"], payload)
+                if domain is None:
+                    rem = handler.earliest_ready(row["type"], payload)
+                    delay = 3600.0 if rem == float("inf") else rem + 1
+                    self.db.retry_task(row["id"], "all providers cooling down or unavailable", now + delay,
+                                       count_attempt=False)
+                    continue
+                wait = self.http.wait_needed(domain)
+                if wait <= 0:
+                    self.lanes.charge(lane)
+                    return row, payload, handler
+                shortest = min(shortest, wait)
         earliest = self.db.earliest_pending_eligible()
         until_eligible = max(0.0, earliest - now) if earliest is not None else float("inf")
         self._wait_hint = min(shortest, until_eligible) if shortest != float("inf") or until_eligible != float("inf") else 0.0

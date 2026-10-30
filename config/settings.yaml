@@ -9,6 +9,13 @@ runtime:
   retry_max_seconds: 3600
   stale_stop_minutes: 60      # after min runtime, stop if no new relevant/borderline item appeared for this long (0 = never)
 
+# Fair scheduling between sources ("lanes": reddit, reddit_discovery, wb_page, wb_pdf, github, stackexchange, ...).
+# Priority orders work inside a lane; lanes with ready work take turns in proportion to their weight (default 1), so a
+# huge Reddit backlog cannot starve PDFs or the other sources. Weights bias the share, they never exclude a lane.
+scheduler:
+  weights:
+    reddit: 2                 # the main source gets twice the turns of any single other lane
+
 paths:
   data_dir: data              # state DB, logs and output live under here (relative to where you run the command)
 

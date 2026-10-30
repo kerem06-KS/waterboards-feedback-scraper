@@ -9,6 +9,7 @@ src/wbscraper/
   db.py                    SQLite (WAL): tasks, items, threads, provider health, statistics
   http.py                  shared client: pacing, jittered backoff, Retry-After, size caps, cooldowns
   runner.py                single-threaded loop: pick -> execute -> commit; stop conditions; Ctrl+C
+  scheduler.py             lanes and fair queueing between sources (priority only orders work inside a lane)
   pipeline.py              redact -> score -> dedupe -> store, one place for all filtering
   relevance.py redact.py dates.py textutil.py htmltext.py robots.py export.py report.py rescore.py progress.py stats.py
                            (relevance.py: two-stage classifier; rescore.py: reclassify + prune stale work)
@@ -28,8 +29,14 @@ tests/                     mocked network only (sockets are blocked by a fixture
 
 1. `queries.seed()` inserts tasks (`reddit_search`, `reddit_urls`, `reddit_discover`, …). A task's key is the hash of
    its type and payload, so re-seeding on resume never duplicates work, and newly added terms are simply new tasks.
-2. `Runner` picks the highest-priority task whose first usable provider's domain is ready (per-domain pacing means
-   PullPush, Arctic Shift and the search engine interleave while each site sees only slow serial traffic).
+2. `Runner` picks the next task **fairly between sources**. Tasks are grouped into lanes (`scheduler.py`: all Reddit
+   work is one lane, search-engine discovery, Water Boards HTML pages, Water Boards PDFs, GitHub, Stack Exchange, ...
+   each their own). Priority orders work *inside* a lane (thread expansion first); between lanes, start-time fair
+   queueing gives each lane with ready work its turn in proportion to `scheduler.weights` (Reddit 2, others 1). A lane
+   whose domain is still pacing is skipped at no cost, so per-domain pacing still lets sites interleave. Without this,
+   a backlog of thousands of Reddit searches (priority 520-900) starved the 1,500 PDF tasks (priority 480) forever.
+   `ready_tasks` also looks at the top rows of every (family, task type) group, so a big group of page tasks cannot
+   hide the PDF tasks queued next to it.
 3. A handler executes it through a **provider chain**. Provider failures are recorded and the next provider is
    tried. If every provider fails, the task is deferred with exponential cooldown (10 min × 2ⁿ, up to 4 failed
    attempts, then `failed`). An exception inside an adapter fails that task only.

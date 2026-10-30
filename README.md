@@ -134,6 +134,11 @@ data/logs/run-*.log                    <- detailed logs and errors (the terminal
 
 ---
 
+**Fair scheduling.** Reddit, the Water Boards PDFs, GitHub, Stack Exchange and the other sources each form a lane.
+Priority only orders work inside a lane; lanes take turns, so a deep Reddit backlog cannot starve the PDF queue (see
+`scheduler.weights` in `config/settings.yaml`). `wbscraper status` shows pending/done per task type, which is the quickest
+way to confirm every source is moving.
+
 ## Relevance filtering (no paid AI)
 
 Classification is rule-based, two-stage and fully configurable (`config/relevance.yaml`, `config/terms/*.yaml`).
