@@ -67,8 +67,9 @@ polite_phrases:
 # Which sentences are about a Water Boards site or system (the only ones scored).
 focus:
   # Interface words beyond the relevance filter's list (config/terms/signals.yaml: usability).
-  extra_interface_words: [database, databases, map, maps, pdf, pdfs, form, forms, web page, webpage, page, pages,
-                          link, links, search, app, online, account, portal, dashboard, tool, tracker]
+  # 'page', 'form', 'link', 'search', 'tool', 'online', 'app' and 'account' were dropped in round 2: they match "Page 3 of 12", "form of",
+  # "a link to the report" and similar, and made agency text and letters look like talk about a website.
+  extra_interface_words: [database, databases, map, maps, pdf, pdfs, web page, webpage, portal, dashboard, tracker]
   # An organisation mention ("the State Water Board ...") counts only next to a service word, so policy
   # comments about the Board ("the Board ignored ...") are not read as opinions of a website.
   service_words: [call, called, calling, phone, email, emailed, emailing, contact, contacted, reach, reached,
@@ -80,3 +81,83 @@ focus:
   follow_on_starts: [it, "it's", its, this, that, they, "they're", these, those, which, neither, both,
                      the site, the website, the system, the portal, the map, the database, the page,
                      the app, the tool, the search]
+
+# --- Added in the recall-improvement pass (docs/SENTIMENT.md, "Round 2") ----------------------------------------
+# Written from general ways people describe software and website problems (inability, limits, missing features,
+# stale content), before measuring. Each group can be switched off in `analyze-eval` to see what it adds.
+
+# Subtle frustration words VADER scores 0 or too weakly.
+subtle_words:
+  reason: "mild or hedged frustration with software and websites"
+  words: {erroneously: -1.5, unfortunately: -1.0, sadly: -1.2, overwhelming: -1.3, complicated: -1.2, hiccup: -1.2,
+          misleading: -1.5, inaccurate: -1.5, cryptic: -1.5, tricky: -0.8, finicky: -1.3,
+          cluttered: -1.3, bloated: -1.2, quirky: -0.8, flaky: -1.5, sluggish: -1.4, kludgy: -1.5, janky: -1.5}
+
+complaint_patterns:
+  # (regex, valence, reason). Applied to one sentence at a time, case-insensitive, after curly quotes are straightened.
+  - name: inability
+    expand_focus: true   # true: a sentence like this counts as about the system when the post is about one
+    reason: "cannot / unable / does not + an everyday action: the user could not do something"
+    value: -1.6
+    pattern: "\\b(?:can't|cannot|can not|couldn't|could not|unable to|not able to|won't|wouldn't|isn't able to|doesn't|does not|didn't|did not|failed to|fails to)\\s+(?:\\w+\\s+){0,2}(?:find|load|upload|edit|view|see|enter|submit|log ?in|sign in|access|download|open|search|display|show|save|print|navigate|register|export)\\b"
+  - name: limit
+    expand_focus: true   # true: a sentence like this counts as about the system when the post is about one
+    reason: "'only one ... can be ...' and 'no ... can be ...': a feature that is limited or missing"
+    value: -1.5
+    pattern: "\\b(?:only (?:one|a single|1|two|a few)|no)\\b[^.!?]{0,60}\\b(?:can|could|may) be (?:\\w+ ){0,2}(?:entered|added|edited|uploaded|selected|viewed|changed|removed|saved|submitted|downloaded|listed)\\b"
+  - name: missing_feature
+    expand_focus: true   # true: a sentence like this counts as about the system when the post is about one
+    reason: "'no way / option / ability / button to ...': something the user needs is not offered"
+    value: -1.4
+    pattern: "\\bno (?:way|option|ability|means|button|link|field|text ?box(?:es)?|search|filter|export|download|api)\\b"
+  - name: not_cannot_be
+    expand_focus: true   # true: a sentence like this counts as about the system when the post is about one
+    reason: "'cannot be edited / viewed / found': a passive inability"
+    value: -1.5
+    pattern: "\\b(?:cannot|can't|can not|couldn't|could not|won't|wouldn't) (?:be )?(?:edited|viewed|found|saved|changed|downloaded|opened|printed|accessed|loaded|displayed|updated|searched)\\b"
+  - name: stale
+    expand_focus: true   # true: a sentence like this counts as about the system when the post is about one
+    reason: "stale or out-of-date content"
+    value: -1.4
+    pattern: "\\b(?:not (?:up to date|up-to-date|current|updated)|out of date|out-of-date|no longer (?:updated|maintained|available|supported)|hasn't been updated|haven't been updated)\\b"
+  - name: lacks_data
+    expand_focus: true   # true: a sentence like this counts as about the system when the post is about one
+    reason: "data or content that is missing, blank or not shown"
+    value: -1.3
+    pattern: "\\b(?:mostly blank|is blank|are blank|shows? nothing|doesn't show|does not show|not showing|isn't showing|not displayed|missing from)\\b"
+  - name: confusion
+    expand_focus: org   # org: counts as about the Water Boards when the sentence itself names the Board, an office or a system
+    reason: "the user could not tell what to do"
+    value: -1.4
+    pattern: "\\b(?:so |very |really |pretty |quite )?(?:confus(?:ed|ing)|not (?:sure|clear) (?:how|where|what|which|whether|if)|no idea (?:how|where|what|which)|(?:don't|do not|didn't|did not) (?:know|understand) (?:how|where|what|which)|what (?:am|are) i doing wrong)\\b"
+  - name: scattered
+    expand_focus: org   # org: counts as about the Water Boards when the sentence itself names the Board, an office or a system
+    reason: "information spread across places"
+    value: -1.2
+    pattern: "\\b(?:scattered|all over the (?:place|internet|site|website)|buried|hidden (?:away|deep)|hard to (?:locate|spot))\\b"
+  - name: wait
+    expand_focus: org   # org: counts as about the Water Boards when the sentence itself names the Board, an office or a system
+    reason: "long waits for a response or processing"
+    value: -1.3
+    pattern: "\\b(?:waiting (?:for )?(?:over |more than |about |almost )?(?:\\w+ ){0,2}(?:weeks?|months?|days)|backed up|back ?logged|not heard back|haven't heard back|have not heard back|no one (?:has )?(?:responded|replied|answered))\\b"
+  - name: sentiment_comparative
+    expand_focus: false   # true: a sentence like this counts as about the system when the post is about one
+    reason: "explicitly worse than something else"
+    value: -1.2
+    pattern: "\\b(?:worse|clunkier|slower|harder|more confusing|less useful|less intuitive)\\b (?:map|site|website|page|portal|tool|version|interface|than)"
+  - name: only_find
+    expand_focus: true
+    reason: "'could only find / see / get ...': the user got less than they needed"
+    value: -1.1
+    pattern: "\\b(?:could|can|was able to|were able to) only (?:find|see|get|view|access|use|locate)\\b"
+  - name: but_not
+    expand_focus: true
+    reason: "'shows up in X but not in Y': content or data that is missing somewhere it should be"
+    value: -1.3
+    pattern: "\\b(?:showing|shows|appears?|appearing|listed|visible|available|there|present|found)\\b[^.!?]{0,40}\\bbut (?:not|isn't|aren't|missing)\\b"
+  - name: doing_wrong
+    expand_focus: false
+    reason: "'what am I doing wrong': the user cannot get it to work"
+    value: -1.2
+    pattern: "\\bwhat (?:am i|i am|are we|we are|i'm) doing wrong\\b"
+

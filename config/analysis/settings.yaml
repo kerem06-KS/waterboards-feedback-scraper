@@ -7,8 +7,10 @@ sentiment:
   # vaderSentiment: the original 3.3.2 package, kept for comparison only.
   backend: nltk-vader-sentiment
   alpha: 15                 # VADER's normalisation constant (its default; not tuned)
+  aggregate: vote           # vote | mean | sum -- how sentence scores become a post score (docs/SENTIMENT.md, Round 2)
+  sum_alpha: 1.0            # only used by aggregate: sum
   thresholds:               # score <= negative -> negative; score >= positive -> positive; otherwise neutral
-    negative: -0.3          # locked by `wbscraper analyze-eval` on the tuning set (see docs/SENTIMENT.md)
+    negative: -0.2          # locked by `wbscraper analyze-eval` on the development set (see docs/SENTIMENT.md)
     positive: 0.55
   mixed_cutoff: 0.3         # one focus sentence >= +0.3 and another <= -0.3 -> flagged "mixed" for review
   review_margin: 0.10       # scores this close to a threshold are flagged for review (exact 0.0 is not)
@@ -34,4 +36,5 @@ paths:                      # relative to the data directory (default: data/)
   tag_cache: analysis/tag_cache.json
   gold_relevant: analysis/gold_relevant.csv
   gold_tuning: analysis/gold_tuning.csv
+  gold_pool: analysis/gold_pool.csv       # extra hand-labelled posts from the database (Round 2 development data)
   eval_report: analysis/eval_report.md

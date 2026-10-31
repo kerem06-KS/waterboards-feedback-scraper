@@ -55,6 +55,10 @@ def cmd_analyze_eval(args) -> int:
     try:
         relevant = tune.load_gold(cfg.path("gold_relevant"))
         tuning = tune.load_gold(cfg.path("gold_tuning"))
+        try:
+            tuning += tune.load_gold(cfg.path("gold_pool"))
+        except (FileNotFoundError, KeyError):
+            pass
     except FileNotFoundError as e:
         console.print(f"[red]Hand-labelled file missing:[/] {e.filename}. See docs/SENTIMENT.md for the format.")
         return 2

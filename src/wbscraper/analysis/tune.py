@@ -149,7 +149,28 @@ def cross_validate(scores: list[float], gold: list[str], k: int = 5, repeats: in
 
 # -- the evaluation run ------------------------------------------------------------------------------------
 def _scores(scorer: SentimentScorer, items: Iterable[GoldItem]) -> list[float]:
-    return [scorer.score(it.text).score for it in items]
+    return [scorer.score(it.text, it.source_url).score for it in items]
+
+
+def auc_negative(scores: list[float], gold: list[str]) -> float:
+    """Chance that a hand-labelled negative post scores lower than another post (0.5 = chance, 1.0 = perfect).
+    Independent of the cutoffs, so it shows whether the scorer can tell negatives apart at all."""
+    pos = [s for s, g in zip(scores, gold) if g == "negative"]
+    rest = [s for s, g in zip(scores, gold) if g != "negative"]
+    if not pos or not rest:
+        return float("nan")
+    return sum((p < n) + 0.5 * (p == n) for p in pos for n in rest) / (len(pos) * len(rest))
+
+
+def recall_at_false_positive_rate(scores: list[float], gold: list[str], rate: float) -> float:
+    """Share of negatives caught when the cutoff is set so `rate` of the non-negative posts are flagged."""
+    rest = sorted(s for s, g in zip(scores, gold) if g != "negative")
+    pos = [s for s, g in zip(scores, gold) if g == "negative"]
+    k = int(rate * len(rest))
+    if not pos or k == 0:
+        return 0.0
+    cut = rest[k - 1]
+    return sum(1 for s in pos if s <= cut) / len(pos)
 
 
 def evaluate(cfg: AnalysisConfig, lib: TermLibrary, relevant: list[GoldItem], tuning: list[GoldItem],
@@ -161,7 +182,8 @@ def evaluate(cfg: AnalysisConfig, lib: TermLibrary, relevant: list[GoldItem], tu
     main_backend = cfg.sentiment.get("backend", "nltk-vader-sentiment")
     rows = []
 
-    def row(name: str, pred_t: list[str], pred_r: list[str], cv: dict | None = None, thresholds=None):
+    def row(name: str, pred_t: list[str], pred_r: list[str], cv: dict | None = None, thresholds=None,
+            scores_t: list[float] | None = None, scores_r: list[float] | None = None):
         mr = metrics(gold_r, pred_r)
         mc = metrics([gold_r[i] for i in clear_r], [pred_r[i] for i in clear_r])
         rows.append({
@@ -170,20 +192,31 @@ def evaluate(cfg: AnalysisConfig, lib: TermLibrary, relevant: list[GoldItem], tu
             "relevant": mr, "relevant_clear": mc,
             "relevant_macro_f1_ci": bootstrap_ci(gold_r, pred_r, macro_f1),
             "relevant_accuracy_ci": bootstrap_ci(gold_r, pred_r, lambda g, p: sum(a == b for a, b in zip(g, p)) / len(g)),
+            "ranking": None if scores_t is None else {
+                "dev_auc": auc_negative(scores_t, gold_t), "rel_auc": auc_negative(scores_r, gold_r),
+                "dev_recall_at_5pct_fp": recall_at_false_positive_rate(scores_t, gold_t, 0.05),
+                "rel_recall_at_5pct_fp": recall_at_false_positive_rate(scores_r, gold_r, 0.05)},
         })
 
     row("Always neutral (baseline)", ["neutral"] * len(tuning), ["neutral"] * len(relevant))
     locked = None
     for be in backends:
         plain = SentimentScorer(cfg, lib, backend=be, thresholds=DEFAULT, plain=True)
-        row(f"Default VADER, whole text, ±0.05 [{be}]", predict(_scores(plain, tuning), DEFAULT),
-            predict(_scores(plain, relevant), DEFAULT), thresholds=DEFAULT)
+        pt, pr_ = _scores(plain, tuning), _scores(plain, relevant)
+        row(f"Default VADER, whole text, ±0.05 [{be}]", predict(pt, DEFAULT), predict(pr_, DEFAULT), thresholds=DEFAULT,
+            scores_t=pt, scores_r=pr_)
+        r1 = SentimentScorer(cfg, lib, backend=be, thresholds=DEFAULT, aggregate="mean",
+                             groups_off=["complaint_patterns", "subtle_words", "document_strict", "clauses"])
+        r1t, r1r = _scores(r1, tuning), _scores(r1, relevant)
+        t1, _ = choose_thresholds(r1t, gold_t)
+        row(f"Round 1 rules (mean of sentences, no patterns), tuned [{be}]", predict(r1t, t1), predict(r1r, t1), thresholds=t1,
+            scores_t=r1t, scores_r=r1r)
         ours = SentimentScorer(cfg, lib, backend=be, thresholds=DEFAULT)
         st, sr = _scores(ours, tuning), _scores(ours, relevant)
-        row(f"This scorer, ±0.05 [{be}]", predict(st, DEFAULT), predict(sr, DEFAULT), thresholds=DEFAULT)
+        row(f"This scorer, ±0.05 [{be}]", predict(st, DEFAULT), predict(sr, DEFAULT), thresholds=DEFAULT, scores_t=st, scores_r=sr)
         t, info = choose_thresholds(st, gold_t)
         cv = cross_validate(st, gold_t)
-        row(f"This scorer, tuned cutoffs [{be}]", predict(st, t), predict(sr, t), cv=cv, thresholds=t)
+        row(f"This scorer, tuned cutoffs [{be}]", predict(st, t), predict(sr, t), cv=cv, thresholds=t, scores_t=st, scores_r=sr)
         if be == main_backend:
             locked = {"backend": be, "thresholds": t, "rule": info["rule"], "best_tuning_f1": info["best"],
                       "plateau_size": len(info["plateau"]), "cv": cv,
@@ -192,15 +225,22 @@ def evaluate(cfg: AnalysisConfig, lib: TermLibrary, relevant: list[GoldItem], tu
     ablation = []
     if ablate and locked:
         t = locked["thresholds"]
-        variants = [("all rules (locked)", {}), ("no cleaning", {"use_clean": False}), ("no focus (whole post)", {"use_focus": False})]
+        variants = [("all rules (locked)", {}), ("no cleaning", {"use_clean": False}), ("no focus (whole post)", {"use_focus": False}),
+                    ("mean instead of vote", {"aggregate": "mean"}), ("without clause splitting", {"groups_off": ["clauses"]}),
+                    ("without complaint patterns", {"groups_off": ["complaint_patterns"]}),
+                    ("without subtle words", {"groups_off": ["subtle_words"]}),
+                    ("documents scored like posts", {"groups_off": ["document_strict"]})]
         for g in list((cfg.lexicon.get("neutral_words") or {})) + list((cfg.lexicon.get("added_words") or {})):
             variants.append((f"without {g}", {"groups_off": [g]}))
         variants += [("without phrase rules", {"groups_off": ["phrases"]}), ("without polite-phrase removal", {"groups_off": ["polite_phrases"]})]
         for name, kw in variants:
             sc = SentimentScorer(cfg, lib, backend=main_backend, thresholds=t, **kw)
-            m = metrics(gold_t, predict(_scores(sc, tuning), t))
+            sc_t = _scores(sc, tuning)
+            m = metrics(gold_t, predict(sc_t, t))
             ablation.append({"variant": name, "macro_f1": m["macro_f1"], "negative_f1": m["per_class"]["negative"]["f1"],
-                             "positive_f1": m["per_class"]["positive"]["f1"]})
+                             "negative_recall": m["per_class"]["negative"]["recall"],
+                             "negative_precision": m["per_class"]["negative"]["precision"],
+                             "positive_f1": m["per_class"]["positive"]["f1"], "auc": auc_negative(sc_t, gold_t)})
     return {"rows": rows, "locked": locked, "ablation": ablation,
             "sizes": {"relevant": len(relevant), "relevant_clear": len(clear_r), "tuning": len(tuning),
                       "relevant_labels": {c: gold_r.count(c) for c in LABELS},
@@ -244,8 +284,9 @@ def render_report(res: dict, icwsm: list[dict] | None = None, date: str = "") ->
     s = res["sizes"]
     L = res["locked"]
     lines = [f"# Sentiment accuracy report{(' (' + date + ')') if date else ''}", "",
-             f"Hand-labelled sets: {s['relevant']} relevant posts (evaluation only; {s['relevant_clear']} with a clear label) "
-             f"and {s['tuning']} tuning posts. Labels: relevant {s['relevant_labels']}, tuning {s['tuning_labels']}.", ""]
+             f"Hand-labelled sets: {s['relevant']} relevant posts (reported separately; {s['relevant_clear']} with a clear label) "
+             f"and {s['tuning']} development posts (all rule and cutoff choices were made on these). "
+             f"Labels: relevant {s['relevant_labels']}, development {s['tuning_labels']}.", ""]
     if L:
         t = L["thresholds"]
         lines += [f"**Locked settings:** backend `{L['backend']}`, negative ≤ {t[0]}, positive ≥ {t[1]} "
@@ -253,16 +294,20 @@ def render_report(res: dict, icwsm: list[dict] | None = None, date: str = "") ->
                   f"Cross-validated macro-F1 of the tuning procedure on the tuning set: {L['cv']['macro_f1']:.2f} "
                   f"(range {L['cv']['macro_f1_range'][0]:.2f}–{L['cv']['macro_f1_range'][1]:.2f}).", ""]
     lines += ["## Comparison", "",
-              "| Method | Cutoffs | Relevant: accuracy | Relevant: macro-F1 (95% CI) | Relevant: negative P / R | Relevant clear-only: macro-F1 | Tuning: macro-F1 |",
-              "|---|---|---|---|---|---|---|"]
+              "| Method | Cutoffs | Dev: negative P / R | Dev: AUC | Dev: recall at 5% false pos. | Relevant: accuracy | Relevant: negative P / R | Relevant: macro-F1 (95% CI) | Dev: macro-F1 |",
+              "|---|---|---|---|---|---|---|---|---|"]
     for r in res["rows"]:
         rel, ci = r["relevant"], r["relevant_macro_f1_ci"]
         neg = rel["per_class"]["negative"]
         th = f"{r['thresholds'][0]} / {r['thresholds'][1]}" if r["thresholds"] else "—"
         tun = r["tuning"]["macro_f1"]
         cv = f" (CV {r['tuning_cv']['macro_f1']:.2f})" if r.get("tuning_cv") else ""
-        lines.append(f"| {r['method']} | {th} | {_pct(rel['accuracy'])} | {rel['macro_f1']:.2f} ({ci[0]:.2f}–{ci[1]:.2f}) | "
-                     f"{_pct(neg['precision'])} / {_pct(neg['recall'])} | {r['relevant_clear']['macro_f1']:.2f} | {tun:.2f}{cv} |")
+        dn = r["tuning"]["per_class"]["negative"]
+        rk = r.get("ranking") or {}
+        auc = f"{rk['dev_auc']:.2f}" if rk else "—"
+        r5 = _pct(rk["dev_recall_at_5pct_fp"]) if rk else "—"
+        lines.append(f"| {r['method']} | {th} | {_pct(dn['precision'])} / {_pct(dn['recall'])} | {auc} | {r5} | {_pct(rel['accuracy'])} | "
+                     f"{_pct(neg['precision'])} / {_pct(neg['recall'])} | {rel['macro_f1']:.2f} ({ci[0]:.2f}–{ci[1]:.2f}) | {tun:.2f}{cv} |")
     best = res["rows"][-1] if res["rows"] else None
     for r in res["rows"]:
         if L and r["thresholds"] == L["thresholds"] and L["backend"] in r["method"] and "tuned" in r["method"]:
@@ -278,10 +323,11 @@ def render_report(res: dict, icwsm: list[dict] | None = None, date: str = "") ->
             p = best["relevant"]["per_class"][g]
             lines.append(f"| {g} | {_pct(p['precision'])} | {_pct(p['recall'])} | {p['f1']:.2f} | {p['support']} |")
     if res.get("ablation"):
-        lines += ["", "## What each rule adds (tuning set, locked cutoffs; information only, nothing is selected here)", "",
-                  "| Variant | Macro-F1 | Negative F1 | Positive F1 |", "|---|---|---|---|"]
+        lines += ["", "## What each rule adds (development set, locked cutoffs; information only, nothing is selected here)", "",
+                  "| Variant | Macro-F1 | Negative P / R | AUC | Positive F1 |", "|---|---|---|---|---|"]
         for a in res["ablation"]:
-            lines.append(f"| {a['variant']} | {a['macro_f1']:.2f} | {a['negative_f1']:.2f} | {a['positive_f1']:.2f} |")
+            lines.append(f"| {a['variant']} | {a['macro_f1']:.2f} | {_pct(a.get('negative_precision', 0))} / {_pct(a.get('negative_recall', 0))} | "
+                         f"{a.get('auc', float('nan')):.2f} | {a['positive_f1']:.2f} |")
     if icwsm:
         names = [k for k in icwsm[0] if k not in ("dataset", "n")]
         lines += ["", "## General-text check: correlation with human ratings (Hutto & Gilbert 2014)", "",

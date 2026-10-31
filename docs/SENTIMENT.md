@@ -31,42 +31,73 @@ Percentages in the summary are **shares of the posts collected**. The posts are 
 ## How the score is made
 
 1. **Clean** the text: drop quoted lines (`> ...`, someone else's words), URLs, markdown link targets, code and `[REDACTED_*]` placeholders.
-2. **Pick the sentences that are about a site or system**: a named system (the same matcher the relevance filter uses), an interface word (website, portal, map, upload, login, form...), or the Water Boards plus a service word (called, applied, waiting...). The sentence right after one counts when it starts "It...", "This...", "The site...". Everything else is ignored. No such sentence means a score of 0.
-3. **Score each with VADER** after the domain adjustments in `config/analysis/lexicon.yaml`: topic and legal words set to 0, usability complaints and praise added ("nightmare", "doesn't work", "can't find", "easy to use"), courtesy formulas removed ("thank you for the opportunity to comment").
-4. **Score = mean of the non-zero sentence scores.** A sentence stating no opinion does not dilute one that does. Label by two cutoffs.
+2. **Split into sentences, then into clauses** at "but", "however", "although", "though", "yet", ";". VADER's own "but" rule halves everything before the "but", so "Unfortunately it's not up to date, but the staff were friendly" used to lose its complaint; each clause is now scored on its own.
+3. **Keep the clauses that are about a site or system** (everything else is ignored; no such clause means a score of 0). A clause counts when it:
+   * names a system (the same matcher the relevance filter uses), or an interface word (website, portal, map, dashboard, upload, login...); or
+   * states an **inability, limit, missing feature, stale content or missing data** ("can't find", "only one X can be entered", "no way to export", "not up to date", "shows nothing") in a post that is about a named system or the Water Boards, even if the clause does not repeat the name; or
+   * is a **service complaint** ("completely backlogged", "waiting six weeks", "everything is so scattered") that names the Board, an office or a system; or
+   * starts "It...", "This...", "The site..." right after one of the above.
 
-Package: **`nltk-vader-sentiment` 1.0.0** (a maintained re-implementation of VADER that fixes about 18 upstream bugs, such as the `but` handling, curly-apostrophe negation, and "no" at the end of a sentence). Against the original `vaderSentiment` 3.3.2 it gave the same results on this project's data and the same correlation with the human ratings of the original VADER paper (below). `vaderSentiment` stays installed for the comparison.
+   **Agency documents and comment letters** (waterboards.ca.gov) are scored strictly: only a clause that names a system counts, because letters and regulations rarely give an opinion about a website.
+4. **Score each clause with VADER** after the adjustments in `config/analysis/lexicon.yaml`: topic and legal words set to 0; usability and subtle-frustration words and phrases added; the complaint patterns above scored as units; courtesy formulas removed.
+5. **Post score ("vote").** A clause at or below −0.3 is a *complaint*, at or above +0.3 *praise*. If there is at least one complaint and complaints are at least as many as praise, the post score is the mean of the complaint clauses; if praise outnumbers complaints, the mean of the praise clauses; otherwise the mean of the non-zero clauses. Praise can no longer average away genuine complaints, and a tie goes to the complaint (those posts are also flagged "mixed opinions" for review).
+6. **Label** by the two cutoffs in `config/analysis/settings.yaml`: negative ≤ −0.2, positive ≥ 0.55, otherwise neutral.
 
-Every rule is written down before measuring and none was fitted to the labelled posts. One rule changed after the first run: step 4 originally averaged *all* chosen sentences. The change made no measurable difference (relevant macro-F1 0.55 → 0.53, tuning 0.41 → 0.39); it was kept because it fixes a case where a neutral sentence dilutes a clear complaint. The first run's report is kept in `data/analysis/eval_report_run1_mean_of_all_focus.md`.
+Package: **`nltk-vader-sentiment` 1.0.0** (a maintained re-implementation of VADER that fixes about 18 upstream bugs, such as the `but` handling, curly-apostrophe negation, and "no" at the end of a sentence). Against the original `vaderSentiment` 3.3.2 it gives the same results on this project's data and the same correlation with the human ratings of the original VADER paper (below). `vaderSentiment` stays installed for the comparison.
 
-## Measured accuracy (2026-10-31)
+## Measured accuracy
 
-Hand labels (mine, from the written definition above) for two sets:
+All labels are mine, written from the definition above before any scoring. Three labelled sets exist (all local; they hold post text):
 
-* **Evaluation set: the 71 relevant posts.** Never used for tuning. 10 negative, 56 neutral, 5 positive; 63 labelled "clear".
-* **Tuning set: 449 other posts** (a seeded random sample of the borderline posts, plus the remaining non-document borderline posts). 12 negative, 420 neutral, 17 positive.
-
-Only the two cutoffs were tuned, on a 0.05 grid, on the tuning set only. Each is the middle of the range whose cross-validated macro-F1 is within 0.01 of the best. Result: **negative ≤ −0.3, positive ≥ 0.55**.
-
-| Method (nltk-vader-sentiment) | Relevant: accuracy | Relevant: macro-F1 (95% CI) | Relevant: negative precision / recall |
+| Set | Posts | Negative / neutral / positive | Used for |
 |---|---|---|---|
-| Always "neutral" | 79% | 0.29 | 0% / 0% |
-| Default VADER, whole text, ±0.05 | 28% | 0.26 (0.16–0.37) | 19% / 30% |
-| This scorer, ±0.05 | 62% | 0.48 (0.35–0.61) | 57% / 40% |
-| **This scorer, locked cutoffs** | **82%** | **0.53 (0.35–0.71)** | **100% / 30%** |
+| Relevant posts (the deliverable CSV) | 71 | 10 / 56 / 5 | Reported separately. Not used for choosing rules or cutoffs. |
+| Tuning sample (borderline posts) | 449 | 12 / 420 / 17 | Development |
+| Extra posts from the database that name a system | 227 | 6 / 215 / 6 | Development (added in Round 2) |
 
-On the 71 relevant posts the scorer's confusion matrix is: of 10 negatives it finds 3 and calls 7 neutral; of 56 neutrals it gets 54; of 5 positives it finds 1.
+The development set (676 posts, **18 negatives**) is where every rule and cutoff was chosen. Precision there looks low because only 2.7% of those posts are negative; among the 71 relevant posts 14% are.
 
-**How to read this honestly**
+### Round 2 (this version) against Round 1
 
-* Default VADER is worse than guessing "neutral" for every post here (28% vs 79% accuracy). The focus-and-lexicon changes are what make it usable.
-* The scorer is **cautious**: when it says negative it is right (3 of 3), but it misses most negatives (recall 30%). The summary's "share negative" is therefore a **floor**; my hand labels give 10/71 = 14%, the scorer 3/71 = 4%.
-* Typical misses: long posts where a few positive sentences ("the staff are helpful") outweigh a long list of defects (the two CalWATRS blog posts); complaints phrased without any strongly negative word ("I'm a little confused about the proof part"); help-seeking posts.
-* The numbers are noisy: 10 negatives and 5 positives. The confidence intervals above are wide, and the tuning set has only 12 negatives (its cross-validated macro-F1 is 0.37). The cutoffs are the best supported by little data, not precise.
-* All labels were written by one person (me). Eight relevant posts and 36 tuning posts are marked "unclear" because reasonable readers could differ; that is what the review file is for.
-* Because the aggregation change was made after the first run had shown the relevant-set results, that set is not a perfectly untouched check.
+| Method | Dev: negatives found (of 18) | Dev: precision | Dev: AUC | Dev: found at 5% false positives | Relevant: negatives found (of 10) | Relevant: precision | Relevant: macro-F1 |
+|---|---|---|---|---|---|---|---|
+| Default VADER, whole text, ±0.05 | 33% | 5% | 0.58 | 0% | 3 (30%) | 19% | 0.26 |
+| **Round 1** (mean of sentences, cutoffs −0.3 / 0.55) | 17% | 9% | 0.50 | 17% | 3 (30%) | 100% | 0.52 |
+| **Round 2** (clauses, complaint patterns, vote, strict documents; cutoffs −0.2 / 0.55) | **50%** | **15%** | **0.66** | **39%** | **6 (60%)** | **60%** | **0.58** |
 
-General-text check (correlation with the human ratings of Hutto & Gilbert 2014): the domain word list leaves behaviour on ordinary text essentially unchanged (tweets 0.872 / 0.875 / 0.862 for VADER 3.3.2 / nltk-vader-sentiment / with the domain list; movie reviews 0.427 / 0.427 / 0.428; Amazon 0.590 / 0.589 / 0.608; NYT editorials 0.503 / 0.504 / 0.486).
+("AUC" is the chance that a hand-labelled negative scores lower than another post; 0.5 is chance. "Found at 5% false positives" fixes how many other posts are wrongly flagged, so it does not depend on the cutoffs.) Overall accuracy on the 71 is 82% in both rounds (79% for always saying "neutral"); the confusion matrix for Round 2 is 6/4/0 for the ten hand-labelled negatives (negative/neutral/positive), 3/51/2 for the neutrals and 1/3/1 for the positives.
+
+Round 1 found the negatives it was sure about and missed most of the rest. Round 2 trades some precision for recall: among the 71 it flags 10 posts as negative, 6 of them correctly. The 4 wrong ones (by my labels) are two agency documents (a grant instruction, "allow time for FAAST staff assistance, should any submittal problems occur", which is hypothetical wording the scorer does not recognise, and a comment letter about reporting burden that names CEDEN), one neutral Reddit post and one positive one. The 4 negatives still missed are mild or implied complaints: "learning GeoTracker is hard", "what trips people up", and two help-seeking posts that never say the site is bad.
+
+### What each change adds (development set, locked cutoffs)
+
+| Variant | Macro-F1 | Dev negatives found | AUC |
+|---|---|---|---|
+| All Round 2 rules | 0.44 | 50% | 0.66 |
+| Without complaint patterns | 0.42 | 33% | 0.58 |
+| Mean instead of vote | 0.44 | 39% | 0.62 |
+| Without clause splitting | 0.42 | 44% | 0.65 |
+| Without subtle-frustration words | 0.44 | 50% | 0.64 |
+| Documents scored like posts | 0.41 | 50% | 0.66 |
+| Whole post, no clause selection | 0.34 | 61% (precision 7%) | 0.68 |
+
+The complaint patterns matter most, then the vote and clause splitting. Selecting only the clauses about a site is what keeps precision up: scoring the whole post finds slightly more negatives but flags far more neutral posts.
+
+### What was tried and did not work
+
+* **Summing sentence scores** (so many small complaints add up) was no better than the vote on the development set.
+* **Treating every sentence of a short post as about the system** hurt precision (relevant-post precision fell to 42%) and was dropped.
+* A first set of complaint patterns and interface words was **too loose**. Words such as "page", "form", "link", "app" and "account" matched "Page 3 of 12", "form of", Reddit accounts; "can't work", "cannot be filtered" and "is not edited" matched job rules, water filters and pull-request text. The development set exposed this (precision 7–8%), and the words and patterns were tightened before the final comparison.
+
+### How overfitting was limited, and what is still not clean
+
+* The first round's results had already shown me *kinds* of misses on the 71 (long posts where praise outweighs a list of defects; complaints phrased without a negative word). Round 2 was built to address those kinds of misses, so **the 71 are no longer an untouched test**; treat their numbers as an illustration, not a score.
+* So that the rules would not be fitted to those 71 posts, the development data were enlarged (449 → 676 posts, 12 → 18 negatives, a different mix of sources), the new rules were written from general ways people describe software problems (inability, limits, missing features, stale content, waiting), and every comparison above was decided on the development set. The 71 were not used to choose between variants; only the two cutoffs were tuned (on the development set, from the middle of the plateau where recall and false positives stay flat, so they are not a knife-edge choice).
+* Still small: **18 development negatives and 10 relevant negatives**. A single post moves recall by 6 points (dev) or 10 points (relevant). The confidence intervals are wide (relevant macro-F1 0.58, 95% interval 0.41–0.75).
+* One labeller (me). 36 development posts and 8 relevant posts are marked "unclear".
+* Remaining misses: complaints with no named system or site word in the clause ("Anyone else stuck in limbo here?"); sarcasm; complaints phrased as questions; mild comparatives. The review file lists the clauses behind each score, so these are quick to correct by hand.
+
+General-text check (correlation with the human ratings of Hutto & Gilbert 2014): the domain word list leaves behaviour on ordinary text essentially unchanged (tweets 0.872 / 0.875 / 0.861 for VADER 3.3.2 / nltk-vader-sentiment / with the domain list; movie reviews 0.427 / 0.427 / 0.428; Amazon 0.590 / 0.589 / 0.610; NYT editorials 0.503 / 0.504 / 0.487).
 
 Re-run any time: `wbscraper analyze-eval --icwsm data/analysis/icwsm`. It never changes `config/analysis/settings.yaml`; cutoffs are edited by hand.
 

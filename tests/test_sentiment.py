@@ -106,7 +106,7 @@ def test_scores_stay_between_minus_one_and_plus_one(tmp_path):
 
 def test_ablating_a_group_changes_nothing_else(tmp_path):
     full = scorer(tmp_path)
-    no_phr = scorer(tmp_path, groups_off=["phrases"])
+    no_phr = scorer(tmp_path, groups_off=["phrases", "complaint_patterns"])
     t = "The SMARTS upload doesn't work."
     assert full.score(t).score < no_phr.score(t).score
 
@@ -145,3 +145,82 @@ def test_bootstrap_ci_is_ordered_and_reproducible():
     pred = ["neutral"] * 7 + ["negative"] * 3
     a = tune.bootstrap_ci(gold, pred, tune.macro_f1, n=200)
     assert a[0] <= a[1] and a == tune.bootstrap_ci(gold, pred, tune.macro_f1, n=200)
+
+
+# -- Round 2: complaint detection ------------------------------------------------------------------------
+BLOG = ("How is the CalWATRS database working out? The part of CalWATRS that works well is the support, which is helpful and great. "
+        "CalWATRS has a few really good features and the people who run it are kind. The CalWATRS help desk is excellent. "
+        "Only one Point Of Diversion can be entered. Points Of Diversion cannot be edited. "
+        "Only one water source can be entered. Places Of Use cannot be edited. "
+        "There is no way to upload a map that is visible. The review page is mostly blank. "
+        "The submittal process is not working. Most of the basemap layers are not working.")
+
+
+def test_complaints_that_do_not_name_the_system_count_when_the_post_is_about_one(tmp_path):
+    s = scorer(tmp_path)
+    r = s.score("I filed my annual report in CalWATRS today. Only one Point Of Diversion can be entered.")
+    assert r.label == "negative" and any("Only one Point" in f for f in r.focus)
+    assert scorer(tmp_path, groups_off=["complaint_patterns"]).score(
+        "I filed my annual report in CalWATRS today. Only one Point Of Diversion can be entered.").label == "neutral"
+
+
+def test_praise_cannot_average_away_a_list_of_genuine_complaints(tmp_path):
+    vote = scorer(tmp_path, aggregate="vote").score(BLOG)
+    mean = scorer(tmp_path, aggregate="mean").score(BLOG)
+    assert vote.label == "negative" and vote.mixed
+    assert mean.score > vote.score                          # averaging lets the praise pull the post up
+
+
+def test_a_tie_between_complaint_and_praise_goes_to_the_complaint_and_is_flagged(tmp_path):
+    r = scorer(tmp_path).score("The GeoTracker map is excellent and easy to use. The GeoTracker upload doesn't work.")
+    assert r.label == "negative" and r.mixed and "mixed opinions" in r.review_reasons
+
+
+def test_clause_splitting_stops_but_from_muting_the_complaint(tmp_path):
+    t = "Unfortunately the GeoTracker map is not up to date, but the staff were really friendly and the website is great."
+    split = scorer(tmp_path).score(t)
+    joined = scorer(tmp_path, groups_off=["clauses"]).score(t)
+    assert len(split.focus) >= 2 and min(split.sentence_scores) < joined.score
+
+
+def test_stale_content_and_limits_and_missing_features_are_complaints(tmp_path):
+    s = scorer(tmp_path)
+    for t in ("The CEDEN map is not up to date.", "In eWRIMS there is no way to export the results.",
+              "The SMARTS dashboard shows nothing for my facility.", "I could only find the wastewater information on the water boards website."):
+        assert s.score(t).label == "negative", t
+
+
+def test_service_complaints_that_name_the_board_count(tmp_path):
+    s = scorer(tmp_path)
+    assert s.score("The SWRCB certification office is completely backlogged.").label == "negative"
+    assert s.score("Everything is so scattered with the SWRCB.").label == "negative"
+
+
+def test_agency_documents_are_scored_strictly(tmp_path):
+    s = scorer(tmp_path)
+    boiler = "Applicants who fail to submit the form on the website will not be considered. Page 3 of 12. The Board has failed to act."
+    url = "https://www.waterboards.ca.gov/public_notices/comments/x.pdf"
+    assert s.score(boiler, url).label == "neutral"
+    assert s.score("SMARTS stormwater annual reports: the SMARTS upload doesn't work.", url).label == "negative"      # names a system
+
+
+def test_everyday_words_that_used_to_trigger_false_negatives_do_not(tmp_path):
+    s = scorer(tmp_path)
+    for t in ("Check GeoTracker for cleanup. Toxins cannot be filtered out of the water with backpacking filters.",
+              "Check GeoTracker for cleanup. I hate that you had to add an /s on my account.",
+              "Check GeoTracker for cleanup cases. If you hold an OIT for one plant you can't work at another.",
+              "Check GeoTracker for cleanup cases. Failure to complete the form will render it incomplete."):
+        assert s.score(t).label == "neutral", t
+
+
+def test_unknown_aggregate_is_rejected(tmp_path):
+    with pytest.raises(ValueError):
+        scorer(tmp_path, aggregate="median")
+
+
+def test_ranking_metrics():
+    gold = ["negative", "neutral", "neutral", "neutral"]
+    assert tune.auc_negative([-0.5, 0.0, 0.1, 0.2], gold) == 1.0
+    assert tune.auc_negative([0.5, 0.0, 0.1, 0.2], gold) == 0.0
+    assert tune.recall_at_false_positive_rate([-0.5, 0.0, 0.0, 0.0], gold, 0.34) == 1.0
+    assert tune.auc_negative([0, 0], ["neutral", "neutral"]) != tune.auc_negative([0, 0], ["neutral", "neutral"])   # nan

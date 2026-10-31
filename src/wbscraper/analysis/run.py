@@ -97,7 +97,7 @@ def analyze(cfg: AnalysisConfig, lib: TermLibrary, *, input_path: Path | None = 
     systems = [e for e in lib.entities if e.kind == "system"]
     auto: list[dict] = []
     for r in rows:
-        s = scorer.score(r["text"])
+        s = scorer.score(r["text"], r["source_url"])
         t = Tag(source="none", task="", pain_point="")
         if tagger is not None and tag:
             t = tagger.tag(r["text"], source_name(r["source_url"]), r["date"], retag=retag)
