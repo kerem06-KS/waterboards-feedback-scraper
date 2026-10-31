@@ -35,7 +35,8 @@ def test_scored_csv_keeps_the_first_three_columns_and_never_touches_the_input(tm
     res = analyze(cfg, lib())
     assert hashlib.sha256(inp.read_bytes()).hexdigest() == before
     out = read_csv(res.paths["scored"])
-    assert list(out[0]) == ["text", "date", "source_url", "sentiment_score", "sentiment_label", "task", "pain_point"]
+    assert list(out[0])[:7] == ["text", "date", "source_url", "sentiment_score", "sentiment_label", "task", "pain_point"]
+    assert list(out[0])[7:] == ["vader_label", "label_source", "tag_source", "confidence", "explanation", "needs_review"]
     assert [(r["text"], r["date"], r["source_url"]) for r in out] == ROWS
     assert [r["sentiment_label"] for r in out] == ["negative", "positive", "neutral"]
     assert all(r["task"] == "" and r["pain_point"] == "" for r in out)          # no tagging without --tag
@@ -100,7 +101,7 @@ def test_review_file_flags_rows_and_overrides_are_applied_and_kept(tmp_path):
     kept = [r for r in read_csv(rev) if "github.com" in r["source_url"]][0]
     assert kept["label_override"] == "negative" and kept["note"] == "checked by hand"
     assert rev.with_suffix(".csv.bak").exists()
-    assert "1 changed the automatic label" in res2.paths["summary"].read_text()
+    assert "1 final labels differ from VADER" in res2.paths["summary"].read_text()
 
 
 def test_invalid_override_values_are_ignored_with_a_warning(tmp_path):
@@ -158,7 +159,7 @@ def test_summary_frames_shares_as_collected_posts_and_flags_small_groups(tmp_pat
 def test_summary_with_tags_has_task_pain_point_and_cross_table(tmp_path):
     cfg, _ = setup(tmp_path)
     text = analyze(cfg, lib(), tag=True, client=FakeClient()).paths["summary"].read_text()
-    assert "What people were trying to do (all posts)" in text and "negative posts only, n=1" in text
+    assert "What people were trying to do (all posts)" in text and "posts with a genuine complaint, n=1" in text
     assert "Task × pain point" in text
 
 

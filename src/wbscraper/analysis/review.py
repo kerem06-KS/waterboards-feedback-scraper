@@ -15,7 +15,9 @@ from pathlib import Path
 from .config import LABELS, AnalysisConfig
 
 AUTO_COLUMNS = ["key", "review_reasons", "source", "date", "source_url", "score", "auto_label", "focus_sentences",
-                "task", "task_detail", "pain_point", "tag_confidence", "rationale", "text"]
+                "task", "task_detail", "pain_point", "tag_confidence", "rationale",
+                "ai_label", "ai_task", "ai_pain_point", "ai_confidence", "ai_uncertain", "ai_explanation",
+                "final_label", "final_task", "final_pain_point", "label_source", "tag_source", "text"]
 OVERRIDE_COLUMNS = ["label_override", "task_override", "pain_point_override", "note"]
 COLUMNS = AUTO_COLUMNS + OVERRIDE_COLUMNS
 STALE = "STALE: no matching post"

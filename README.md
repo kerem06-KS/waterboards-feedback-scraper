@@ -208,7 +208,7 @@ wbscraper analyze --tag --dry-run # how many posts would be sent to the Claude A
 wbscraper analyze --tag           # also task (every post) and pain point (negative posts); needs ANTHROPIC_API_KEY
 ```
 
-It writes `data/output/waterboards_feedback_scored.csv` (the three original columns plus score, label, task, pain point),
+It writes `data/output/waterboards_feedback_scored.csv` (the three original columns plus the VADER score, the final label, task and pain point, and where each came from),
 `data/output/sentiment_summary.md`, and `data/analysis/review.csv` for manual corrections. Sentiment counts only opinions
 about a Water Boards website or system itself, and percentages are shares of the collected posts, not user satisfaction.
 Method, measured accuracy and limits: [docs/SENTIMENT.md](docs/SENTIMENT.md).

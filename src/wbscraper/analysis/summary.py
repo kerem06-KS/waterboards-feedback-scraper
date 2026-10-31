@@ -49,7 +49,7 @@ def duplicates(texts: list[str]) -> int:
 
 
 def build_summary(items: list[dict], *, accuracy_note: str = "", reviewed: int = 0, changed: int = 0,
-                  tagged: bool = False, date: str = "") -> str:
+                  tagged: bool = False, date: str = "", label_sources: dict | None = None) -> str:
     """items: dicts with source, label, score, task, pain_point (pain point only meaningful for negatives), systems, text."""
     n = len(items)
     lines = ["# Sentiment summary" + (f" ({date})" if date else ""), "",
@@ -67,8 +67,11 @@ def build_summary(items: list[dict], *, accuracy_note: str = "", reviewed: int =
     d = duplicates([i["text"] for i in items])
     if d:
         lines.append(f"{d} of the posts have identical text to another post (the same message posted in more than one place), so shares are slightly inflated by repeats.")
+    if label_sources:
+        src = ", ".join(f"{k.replace('_', ' ')}: {v}" for k, v in sorted(label_sources.items(), key=lambda kv: -kv[1]))
+        lines.append(f"Where the final labels come from: {src}. VADER's own score is kept in `sentiment_score`.")
     if reviewed:
-        lines.append(f"Manual review: {reviewed} posts have an override or note; {changed} changed the automatic label.")
+        lines.append(f"Manual review: {reviewed} posts have a human override or note; {changed} final labels differ from VADER's.")
 
     by_src: dict[str, list[dict]] = {}
     for i in items:
@@ -101,18 +104,18 @@ def build_summary(items: list[dict], *, accuracy_note: str = "", reviewed: int =
             rows.append([t, k, _share(k, n), c.get("negative", 0), c.get("neutral", 0), c.get("positive", 0)])
         lines += ["", "## What people were trying to do (all posts)", "",
                   *_table(["Task", "Posts", "Share of collected posts", "Negative", "Neutral", "Positive"], rows)]
-        neg = [i for i in items if i["label"] == "negative"]
+        neg = [i for i in items if i["label"] == "negative" or i["pain_point"]]
         if neg:
             pc = Counter(i["pain_point"] or "(not tagged)" for i in neg)
-            lines += ["", f"## Why it went badly (negative posts only, n={len(neg)})", "",
-                      *_table(["Pain point", "Negative posts", "Share of negative posts"],
+            lines += ["", f"## Why it went badly (posts with a genuine complaint, n={len(neg)})", "",
+                      *_table(["Pain point", "Posts", "Share of these posts"],
                               [[p, k, _share(k, len(neg))] for p, k in pc.most_common()])]
             tasks = sorted({i["task"] or "(not tagged)" for i in neg})
             pains = [p for p, _ in pc.most_common()]
             grid = [[t, *[sum(1 for i in neg if (i["task"] or "(not tagged)") == t and (i["pain_point"] or "(not tagged)") == p) or "" for p in pains]]
                     for t in tasks]
-            lines += ["", "### Task × pain point (negative posts)", "", *_table(["Task", *pains], grid)]
-            lines += ["", "### The negative posts", "",
+            lines += ["", "### Task × pain point (posts with a complaint)", "", *_table(["Task", *pains], grid)]
+            lines += ["", "### The posts with a complaint", "",
                       *_table(["Date", "Source", "Score", "Task", "Pain point", "Link"],
                               [[i["date"][:10], i["source"], f"{i['score']:+.2f}", i["task"], i["pain_point"], i["source_url"]] for i in neg])]
     else:

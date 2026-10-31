@@ -15,9 +15,10 @@ Install the extra first: `pip install -e ".[analysis]"`.
 
 | File | What it is |
 |---|---|
-| `data/output/waterboards_feedback_scored.csv` | `text,date,source_url` (identical to the input) + `sentiment_score`, `sentiment_label`, `task`, `pain_point`. `task` is filled for every post, `pain_point` only for negative posts. |
-| `data/output/sentiment_summary.md` | Shares by label, source and system; tasks; pain points; the negative posts. |
-| `data/analysis/review.csv` | One row per post for manual checking (below). Opens in Excel / Google Sheets. |
+| `data/output/waterboards_feedback_scored.csv` | The three original columns, then `sentiment_score` (always the original VADER score) and `sentiment_label` (the **final** label), `task` (every post), `pain_point` (wherever there is a genuine website or system complaint), then `vader_label` (what the VADER score alone gives), `label_source` and `tag_source` (`human_override`, `ai_review`, `vader` or `api_tag`), `confidence`, `explanation` and `needs_review`. |
+| `data/output/sentiment_summary.md` | Shares by label, source and system; tasks; pain points; the posts with a complaint. |
+| `data/analysis/review.csv` | One row per post for manual checking (below), including the AI review and the final values. Opens in Excel / Google Sheets. |
+| `data/analysis/ai_review.csv` | The AI-assisted review of individual posts (below). Read on every run, never rewritten by it. |
 
 ## What "sentiment" means here
 
@@ -114,8 +115,21 @@ Re-run any time: `wbscraper analyze-eval --icwsm data/analysis/icwsm`. It never 
 * **Cost:** about $0.30 of input for the 71 posts at the configured price plus a few cents of output; each run prints the actual token use. If no key is set, tagging is skipped with a message and everything else still runs.
 * Refusal fallback (`fallbacks: default`) is on; set `tagging.fallbacks: off` to disable.
 
+## AI-assisted review of the 71 posts
+
+On 2026-10-31 every one of the 71 posts was re-read against the project definitions (sentiment only for opinions about a Water Boards website or system; the task list and pain-point categories in `config/analysis/tags.yaml`) and given a label, task, pain point (only where a genuine website or system complaint exists), a confidence level (high / medium / low), a one-line explanation and an "uncertain" flag. The reviewer was Claude working inside a Claude Code session; no paid API was used. It started from my earlier hand tags but re-checked each one against the text. It is a second pass by the same reviewer, not an independent person, so treat it as careful but not as ground truth.
+
+Result: 67 of the 71 hand tags were confirmed. Four changed: r47 (a helper's reassurance that learning GeoTracker is hard) went from negative to neutral with no pain point; the task of r38 became "look up data", of r44 "reach staff or request records", and of r01 "log in or manage an account". Compared with VADER, 12 final labels differ (VADER: 10 negative, 58 neutral, 3 positive; reviewed: 9 negative, 57 neutral, 5 positive). 55 classifications are high confidence, 10 medium, 6 low; 9 are flagged `needs_review`.
+
+How it is stored, and how it survives later runs:
+
+* The reviewed values live in `data/analysis/ai_review.csv`, keyed by source URL + text hash (the same key as `review.csv`). `analyze` only reads it, so re-running, re-tagging with `--tag`, or changing VADER settings cannot lose it. A row whose post has left the input is kept but not applied; a row with a value outside the allowed lists is ignored with a warning.
+* Precedence for each final value: **human override** (`label_override`, `task_override`, `pain_point_override` in `review.csv`) → **AI review** → API tag (task and pain point) / VADER (label). Human overrides are never overwritten; `review.csv` is rewritten each run with your override columns carried over, and the previous copy is kept as `review.csv.bak`.
+* The original CSV and the VADER score are untouched: `sentiment_score` is the VADER score, `vader_label` the label it gives, and `waterboards_feedback.csv` is never written.
+* Posts added by a later scrape have no AI review yet, so they get VADER's label, the API tag if `--tag` is used, and `needs_review = yes` when something looks off.
+
 ## Manual review
 
 Open `data/analysis/review.csv`. Rows with something worth a look come first, with the reason in `review_reasons`: score within 0.10 of a cutoff, mixed opinions, no sentence about a site/system, hand label differs from the scorer (the 71 relevant posts), low tag confidence, task "Other"/"Unclassified", or a problem the tagger sees in a post not labelled negative. The `focus_sentences` column shows exactly which sentences produced the score.
 
-Fill any of `label_override` (negative / neutral / positive), `task_override`, `pain_point_override` (exact names from `tags.yaml`, case-insensitive), `note`, then run `wbscraper analyze` again. Overrides are applied to the scored CSV and the summary, survive later runs (the previous file is kept as `review.csv.bak`), are validated (bad values are ignored with a warning), and are matched by URL + text, so an override for a post that is no longer in the input is kept and marked STALE but never applied. The summary reports how many posts were reviewed and how many labels changed.
+The review file also shows the AI review (`ai_*` columns) and the final values (`final_*`, `label_source`, `tag_source`). Fill any of `label_override` (negative / neutral / positive), `task_override`, `pain_point_override` (exact names from `tags.yaml`, case-insensitive), `note`, then run `wbscraper analyze` again. Overrides are applied to the scored CSV and the summary, survive later runs (the previous file is kept as `review.csv.bak`), are validated (bad values are ignored with a warning), and are matched by URL + text, so an override for a post that is no longer in the input is kept and marked STALE but never applied. The summary reports how many posts were reviewed and how many labels changed.

@@ -6,6 +6,7 @@ import hashlib
 import os
 import tempfile
 import time
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -13,11 +14,15 @@ from typing import Any
 from ..terms import TermLibrary
 from .config import LABELS, AnalysisConfig
 from .review import COLUMNS, Override, post_key, read_overrides, write_review
+from .reviewed import read_ai_reviews
 from .sentiment import SentimentScorer
 from .summary import build_summary, source_name
 from .tagging import UNCLASSIFIED, Tag, TagCache, Tagger, TaggingUnavailable, cache_key, make_client
 
-SCORED_HEADER = ["text", "date", "source_url", "sentiment_score", "sentiment_label", "task", "pain_point"]
+# The first seven columns are unchanged from the earlier format. `sentiment_score` is always the original VADER score and
+# `vader_label` the label that score gives; `sentiment_label` is the final label (human override > AI review > VADER).
+SCORED_HEADER = ["text", "date", "source_url", "sentiment_score", "sentiment_label", "task", "pain_point",
+                 "vader_label", "label_source", "tag_source", "confidence", "explanation", "needs_review"]
 
 
 @dataclass
@@ -28,6 +33,7 @@ class RunResult:
     flagged: int = 0
     reviewed: int = 0
     changed: int = 0
+    ai_reviewed: int = 0
     warnings: list[str] = field(default_factory=list)
     tagging: dict[str, Any] = field(default_factory=dict)
     items: list[dict] = field(default_factory=list)
@@ -116,55 +122,100 @@ def analyze(cfg: AnalysisConfig, lib: TermLibrary, *, input_path: Path | None = 
 
     keys = {a["key"] for a in auto}
     ov_rep = read_overrides(rev, cfg, keys)
-    res.warnings += ov_rep.warnings
+    ai_rep = read_ai_reviews(cfg.path("ai_review"), cfg, keys)
+    res.warnings += ov_rep.warnings + ai_rep.warnings
+    res.ai_reviewed = len(ai_rep.reviews)
 
     items, review_rows, scored_rows = [], [], []
     for a in auto:
         r, s, t = a["row"], a["s"], a["tag"]
         ov = ov_rep.overrides.get(a["key"], Override())
-        label = ov.label or s.label
-        if ov.label and ov.label != s.label:
+        ai = ai_rep.reviews.get(a["key"])
+        has_tag = t.source != "none"
+
+        # precedence: human override > AI review > API tag / VADER
+        if ov.label:
+            label, label_src = ov.label, "human_override"
+        elif ai:
+            label, label_src = ai.label, "ai_review"
+        else:
+            label, label_src = s.label, "vader"
+        if ov.task:
+            task, task_src = ov.task, "human_override"
+        elif ai:
+            task, task_src = ai.task, "ai_review"
+        elif has_tag:
+            task, task_src = t.task, "api_tag"
+        else:
+            task, task_src = "", "none"
+        if ov.pain_point:
+            pain, pain_src = ov.pain_point, "human_override"
+        elif ai:
+            pain, pain_src = (ai.pain_point if ai.has_pain else ""), "ai_review"
+        elif has_tag and label == "negative":
+            pain, pain_src = t.pain_point, "api_tag"
+        else:
+            pain, pain_src = "", "none"
+        tag_src = next((x for x in ("human_override", "ai_review", "api_tag") if x in (task_src, pain_src)), "none")
+        if label != s.label:
             res.changed += 1
         if not ov.empty:
             res.reviewed += 1
-        task = ov.task or (t.task if t.source != "none" else "")
-        pain = ""
-        if label == "negative":
-            pain = ov.pain_point or (t.pain_point if t.source != "none" else "")
+
+        confidence = ai.confidence if ai else (t.confidence if has_tag else "")
+        explanation = ai.explanation if ai else (t.rationale if has_tag else "")
         reasons = list(s.review_reasons)
         h = hand.get(hashlib.sha1(r["text"].encode()).hexdigest()[:12])
-        if h and h != s.label:
+        if h and h != s.label and not ai:
             reasons.append(f"hand label is {h}, scorer says {s.label}")
-        if t.source != "none":
+        if ai:
+            if ai.uncertain or ai.confidence == "low":
+                reasons.append("AI review is uncertain")
+            if ai.label != s.label:
+                reasons.append(f"VADER says {s.label}, reviewed label is {ai.label}")
+        elif has_tag:
             if t.confidence == "low":
                 reasons.append("low tag confidence")
             if t.task in ("Other", UNCLASSIFIED):
                 reasons.append(f"task is {t.task}")
             if t.pain_point != "None" and label != "negative" and t.pain_point != "Other / not a website problem":
                 reasons.append(f"tagger sees a problem ({t.pain_point}) but label is {label}")
+        if not ov.empty:
+            needs_review = ""                                    # a person has already looked at it
+        elif ai is not None:
+            needs_review = "yes" if (ai.uncertain or ai.confidence == "low") else ""
+        else:
+            needs_review = "yes" if reasons else ""
         src = source_name(r["source_url"])
         items.append({"source": src, "label": label, "score": s.score, "task": task, "pain_point": pain, "systems": a["systems"],
-                      "text": r["text"], "date": r["date"], "source_url": r["source_url"]})
+                      "text": r["text"], "date": r["date"], "source_url": r["source_url"], "label_source": label_src})
         review_rows.append({"key": a["key"], "review_reasons": "; ".join(reasons), "source": src, "date": r["date"],
                             "source_url": r["source_url"], "score": f"{s.score:+.3f}", "auto_label": s.label,
-                            "focus_sentences": " | ".join(s.focus)[:1500], "task": t.task if t.source != "none" else "",
-                            "task_detail": t.task_detail, "pain_point": t.pain_point if t.source != "none" else "",
-                            "tag_confidence": t.confidence if t.source != "none" else "", "rationale": t.rationale,
-                            "text": r["text"], "label_override": ov.label, "task_override": ov.task,
+                            "focus_sentences": " | ".join(s.focus)[:1500], "task": t.task if has_tag else "",
+                            "task_detail": t.task_detail, "pain_point": t.pain_point if has_tag else "",
+                            "tag_confidence": t.confidence if has_tag else "", "rationale": t.rationale,
+                            "ai_label": ai.label if ai else "", "ai_task": ai.task if ai else "",
+                            "ai_pain_point": (ai.pain_point if ai else ""), "ai_confidence": ai.confidence if ai else "",
+                            "ai_uncertain": ("yes" if ai.uncertain else "") if ai else "", "ai_explanation": ai.explanation if ai else "",
+                            "final_label": label, "final_task": task, "final_pain_point": pain,
+                            "label_source": label_src, "tag_source": tag_src, "text": r["text"],
+                            "label_override": ov.label, "task_override": ov.task,
                             "pain_point_override": ov.pain_point, "note": ov.note})
-        scored_rows.append([r["text"], r["date"], r["source_url"], f"{s.score:.4f}", label, task, pain])
+        scored_rows.append([r["text"], r["date"], r["source_url"], f"{s.score:.4f}", label, task, pain,
+                            s.label, label_src, tag_src, confidence, explanation, needs_review])
 
     res.flagged = sum(1 for r in review_rows if r["review_reasons"])
     res.counts = {lab: sum(1 for i in items if i["label"] == lab) for lab in LABELS}
     res.items = items
     _atomic_csv(out, SCORED_HEADER, scored_rows)
     write_review(rev, review_rows, ov_rep.stale)
-    note = (f"Backend `{scorer.backend_name}`, negative ≤ {scorer.t_neg}, positive ≥ {scorer.t_pos}. Only sentences about a Water Boards "
-            f"site or system are scored. Accuracy against hand labels is in `docs/SENTIMENT.md` (`wbscraper analyze-eval`); "
-            f"with so few negative posts it is indicative, not precise.")
+    note = (f"Backend `{scorer.backend_name}`, negative <= {scorer.t_neg}, positive >= {scorer.t_pos} (VADER, kept in `sentiment_score` "
+            f"and `vader_label`). Final labels follow human overrides, then the AI-assisted review, then VADER. Accuracy of the VADER "
+            f"stage against hand labels is in `docs/SENTIMENT.md`; with so few negative posts it is indicative, not precise.")
     tagged = any(i["task"] for i in items)
+    sources = Counter(i["label_source"] for i in items)
     summ.parent.mkdir(parents=True, exist_ok=True)
     summ.write_text(build_summary(items, accuracy_note=note, reviewed=res.reviewed, changed=res.changed, tagged=tagged,
-                                  date=time.strftime("%Y-%m-%d")), encoding="utf-8")
+                                  label_sources=dict(sources), date=time.strftime("%Y-%m-%d")), encoding="utf-8")
     res.paths = {"scored": out, "summary": summ, "review": rev}
     return res

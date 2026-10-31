@@ -36,5 +36,6 @@ paths:                      # relative to the data directory (default: data/)
   tag_cache: analysis/tag_cache.json
   gold_relevant: analysis/gold_relevant.csv
   gold_tuning: analysis/gold_tuning.csv
+  ai_review: analysis/ai_review.csv       # AI-assisted review of individual posts; read by `analyze`, never rewritten by it
   gold_pool: analysis/gold_pool.csv       # extra hand-labelled posts from the database (Round 2 development data)
   eval_report: analysis/eval_report.md
