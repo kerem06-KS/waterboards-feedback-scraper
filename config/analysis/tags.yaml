@@ -1,0 +1,47 @@
+# Tag lists for the analysis step. Bump tagging.prompt_version in settings.yaml after editing,
+# so `wbscraper analyze --tag` re-tags posts instead of reusing cached tags.
+
+# What the person came to the site (or system) to do. When someone is advising others
+# ("check GeoTracker before you buy"), the task is the one they are recommending.
+tasks:
+  - name: Check a property or area for contamination
+    description: Find out whether a home, lot or neighbourhood has contamination or cleanup cases (homebuyers, residents, neighbours).
+  - name: Look up data, reports or records
+    description: Retrieve specific documents, datasets, case files, permits or monitoring data, usually for work or research.
+  - name: Submit reports or data
+    description: File, upload or certify a required report or data set (SMARTS annual report, GeoTracker upload, eSMR, eAR, water-use statement).
+  - name: Get or renew a certification
+    description: Apply for, renew or prove an operator certificate, exam or similar credential (OCIS, wastewater or drinking water exams, QSD/QSP).
+  - name: Apply for or manage a permit or water right
+    description: Apply for, change or end a permit, enrolment or water right (NOI/NOT, change of information, initial statements).
+  - name: Apply for a grant or loan
+    description: Apply for or manage funding (FAAST, State Revolving Fund, Cleanup Fund claims).
+  - name: Find or pay a fee
+    description: Find out what a fee is, or pay a fee or invoice.
+  - name: Find general information or guidance
+    description: Find out where to go, who is responsible, or what the rules and resources are (water testing labs, algae advisories).
+  - name: Reach staff or request records
+    description: Contact Water Boards staff, get an answer to a question, or make a public records request.
+  - name: Log in or manage an account
+    description: Create, access or fix an account or login.
+  - name: Submit a public comment
+    description: Comment on a proposed policy, permit, order or regulation.
+  - name: Other
+    description: None of the above.
+
+# Why it went badly (assigned only to negative posts in the scored CSV).
+pain_points:
+  - name: Can't find information
+    description: The information the person needs is missing, hidden, scattered or hard to locate; they are sent in circles.
+  - name: Outdated or conflicting pages
+    description: Stale content, broken or moved links, old dates, or instructions that contradict each other across pages.
+  - name: Hard-to-read PDFs and forms
+    description: Documents, PDFs or forms that are hard to read, fill in or understand.
+  - name: Online systems (e.g., SMARTS)
+    description: An online system or tool (SMARTS, GeoTracker, CIWQS, OCIS, CalWATRS/eWRIMS, eAR, FAAST, maps, data services) is slow, broken, confusing, missing features, or fails on upload or login.
+  - name: Reaching staff
+    description: Trouble contacting staff or getting a response, long waits, backlogs, or unclear answers from staff.
+  - name: Other / not a website problem
+    description: The problem described is not about a Water Boards website, system or service (for example the regulation itself, fees, or the contamination).
+  - name: None
+    description: The post describes no problem.

@@ -21,7 +21,8 @@ dependencies = [
 
 [project.optional-dependencies]
 reddit = ["praw>=7.7"]
-dev = ["pytest>=8", "respx>=0.21"]
+analysis = ["nltk-vader-sentiment==1.0.0", "vaderSentiment==3.3.2", "anthropic>=2.3,<3"]
+dev = ["pytest>=8", "respx>=0.21", "nltk-vader-sentiment==1.0.0", "vaderSentiment==3.3.2", "anthropic>=2.3,<3"]
 
 [project.scripts]
 wbscraper = "wbscraper.cli:main"

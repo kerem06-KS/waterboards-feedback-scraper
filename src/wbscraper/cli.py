@@ -1,4 +1,4 @@
-"""Command-line interface: run | resume | status | export | rescore | sources | terms | report | check."""
+"""Command-line interface: run | resume | status | export | rescore | analyze | sources | terms | report | check."""
 from __future__ import annotations
 
 import argparse
@@ -366,6 +366,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="also cancel PENDING searches/thread reads that exist only because of items that are no longer relevant "
                          "(the same clean-up `rescore` performs, without re-scoring anything)")
     tq.set_defaults(func=cmd_tidy_queue)
+    from .analysis.cli import register as _register_analysis
+    _register_analysis(sub, common)
     sub.add_parser("sources", parents=[common], help="list source adapters").set_defaults(func=cmd_sources)
     t = sub.add_parser("terms", parents=[common], help="preview the generated search queries (offline)")
     t.add_argument("--sample", type=int, default=8, help="queries to show per family")

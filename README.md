@@ -197,6 +197,22 @@ relevant by itself.
 
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Query library: [docs/SEARCH_TERMS.md](docs/SEARCH_TERMS.md).
 
+## Analysis step: sentiment, tasks and pain points
+
+A separate step that reads the exported CSV (the scraper and `waterboards_feedback.csv` are never touched):
+
+```bash
+pip install -e ".[analysis]"
+wbscraper analyze                 # sentiment score + label, review file, summary (offline, free)
+wbscraper analyze --tag --dry-run # how many posts would be sent to the Claude API, rough cost
+wbscraper analyze --tag           # also task (every post) and pain point (negative posts); needs ANTHROPIC_API_KEY
+```
+
+It writes `data/output/waterboards_feedback_scored.csv` (the three original columns plus score, label, task, pain point),
+`data/output/sentiment_summary.md`, and `data/analysis/review.csv` for manual corrections. Sentiment counts only opinions
+about a Water Boards website or system itself, and percentages are shares of the collected posts, not user satisfaction.
+Method, measured accuracy and limits: [docs/SENTIMENT.md](docs/SENTIMENT.md).
+
 ## Extending the search terms (no code changes)
 
 Edit the YAML files under `config/`, then run `wbscraper terms` to preview and `wbscraper run` to collect — new

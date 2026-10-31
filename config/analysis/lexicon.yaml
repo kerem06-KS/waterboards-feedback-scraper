@@ -1,0 +1,82 @@
+# Domain adjustments to VADER's word list for posts about Water Boards websites and systems.
+# Written from general usability and regulatory vocabulary, not fitted to the labelled posts.
+# Every group can be switched off in `wbscraper analyze-eval --ablate` to see what it adds.
+
+# Topic and legal words describe the subject (contamination, enforcement, policy), not how the
+# person feels about a website. VADER would score them as feelings, so they are set to 0.
+neutral_words:
+  contamination_topic:
+    reason: "pollution and cleanup vocabulary: the subject of most GeoTracker posts, not an opinion of the site"
+    words: [polluted, polluter, polluters, waste, wasted, leak, leaked, risk, risks, risky, danger, dangerous,
+            harm, cancer, death, die, dead, kill, killed, damage, damaged, damages, emergency, worry, worried,
+            worries, worrying, dump, dumping, poison, nasty, dirty, sick, threat, threaten, threatened, fear, scare]
+  regulatory_terms:
+    reason: "legal and programme terms (violation, penalty, beneficial use, public trust, safe drinking water)"
+    words: [violation, violations, violate, violated, violator, penalty, liability, illegal, clean, safe, safely,
+            safety, protect, protected, benefit, benefits, beneficial, trust, relief, urgent, free]
+  system_names:
+    reason: "'smarts' is the SMARTS system name; VADER scores it as praise"
+    words: [smart, smarts]
+  requests_and_courtesy:
+    reason: "requests and courtesy ('can someone help', 'please', 'thanks', 'we support') are not opinions of a site"
+    words: [help, helps, helping, please, thanks, thank, support, supports, supported, supporting, opportunity,
+            hope, hopefully, luck]
+
+# Usability words VADER does not know (or scores 0) and their valence on VADER's -4..+4 scale.
+added_words:
+  usability_negative:
+    reason: "common complaints about software and websites missing from VADER"
+    words: {nightmare: -2.5, impossible: -1.5, unusable: -2.3, buggy: -1.8, glitchy: -1.8, glitch: -1.5,
+            glitches: -1.5, crashes: -1.7, crashed: -1.7, crashing: -1.7, timeout: -1.2, timeouts: -1.2,
+            clunky: -1.8, cumbersome: -1.6, outdated: -1.3, antiquated: -1.5, archaic: -1.3, convoluted: -1.6,
+            unintuitive: -1.6, scattered: -1.0, tedious: -1.4, inefficient: -1.3, slow: -1.0, laggy: -1.5,
+            unresponsive: -1.5, backlogged: -1.5, backlog: -1.0}
+  usability_positive:
+    reason: "common praise for software and websites missing from VADER"
+    words: {intuitive: 1.8, straightforward: 1.3, handy: 1.5, convenient: 1.6, streamlined: 1.5}
+
+# Multi-word complaints and praise. Matched case-insensitively (curly apostrophes straightened) and
+# scored as one unit, because VADER scores "doesn't work" as 0 ("work" is not in its word list).
+phrases:
+  negative:
+    reason: "usability complaints that VADER cannot see word by word"
+    items: {"doesn't work": -1.8, "does not work": -1.8, "didn't work": -1.6, "not working": -1.8,
+            "isn't working": -1.8, "stopped working": -1.8, "working poorly": -1.8, "won't load": -1.8,
+            "wouldn't load": -1.8, "doesn't load": -1.8, "can't find": -1.5, "cannot find": -1.5,
+            "couldn't find": -1.5, "could not find": -1.5, "can't figure out": -1.5, "hard to find": -1.5,
+            "difficult to find": -1.5, "hard to navigate": -1.6, "difficult to navigate": -1.6,
+            "hard to use": -1.6, "difficult to use": -1.6, "hard to read": -1.4, "no way to": -1.2,
+            "never heard back": -1.5, "no response": -1.2, "no reply": -1.2, "locked out": -1.5,
+            "broken link": -1.5, "broken links": -1.5, "dead link": -1.5, "takes forever": -1.6,
+            "taking forever": -1.6, "back logged": -1.5, "waste of time": -2.0, "in limbo": -1.3}
+  positive:
+    reason: "usability praise that VADER cannot see word by word"
+    items: {"easy to use": 2.0, "easy to find": 1.8, "easy to navigate": 1.8, "user friendly": 1.8,
+            "user-friendly": 1.8, "way better": 2.0, "works well": 1.6, "works great": 2.0}
+
+# Courtesy formulas removed before scoring ("thank you for the opportunity to comment" is not praise).
+polite_phrases:
+  reason: "letter and forum formulas that VADER scores as strongly positive"
+  items: ["thanks in advance", "thank you in advance", "thank you for your time", "thank you for your consideration",
+          "thank you for the opportunity to comment", "thank you for the opportunity", "appreciate the opportunity to comment",
+          "appreciate the opportunity", "any help is appreciated", "any help would be appreciated",
+          "would be greatly appreciated", "would be appreciated", "can someone help", "can anyone help",
+          "please help", "hope this helps", "hope it helps", "i hope this is helpful", "feel free to",
+          "good luck", "let me know if you have any questions", "please do not hesitate"]
+
+# Which sentences are about a Water Boards site or system (the only ones scored).
+focus:
+  # Interface words beyond the relevance filter's list (config/terms/signals.yaml: usability).
+  extra_interface_words: [database, databases, map, maps, pdf, pdfs, form, forms, web page, webpage, page, pages,
+                          link, links, search, app, online, account, portal, dashboard, tool, tracker]
+  # An organisation mention ("the State Water Board ...") counts only next to a service word, so policy
+  # comments about the Board ("the Board ignored ...") are not read as opinions of a website.
+  service_words: [call, called, calling, phone, email, emailed, emailing, contact, contacted, reach, reached,
+                  reply, replied, respond, responded, response, heard back, application, applied, apply,
+                  applying, waiting, wait, backlog, backlogged, processed, processing, approve, approved,
+                  submit, submitted, submitting, upload, uploaded, website, web site, site, staff, office,
+                  certificate, license, renew, renewal, exam, fee, fees, pay, paid, payment, form, account]
+  # A sentence right after a focus sentence also counts when it starts with one of these.
+  follow_on_starts: [it, "it's", its, this, that, they, "they're", these, those, which, neither, both,
+                     the site, the website, the system, the portal, the map, the database, the page,
+                     the app, the tool, the search]
