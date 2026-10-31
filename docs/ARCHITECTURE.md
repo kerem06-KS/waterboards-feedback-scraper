@@ -164,3 +164,9 @@ settings/term-library entries and a mocked test. The core (HTTP, queue, pipeline
   (`rescore.queue_thread_followups`) queues the other comments of Reddit threads that are relevant now, using the live
   collector's task shape, so replies in newly relevant threads are collected. Generic entity names ("Water Conservation
   Portal", "Drinking Water Watch", "SAFER dashboard") need California / Water Boards context.
+* **Timeouts, splitting and priority** (`reddit_tasks.py`): a provider's "query timed out" first re-queues the *same* window
+  (`timeouts` counter in the payload, reset for paging continuations and split children); only a window that keeps
+  timing out is halved, and each child is queued `reddit.split_priority_decay` lower than its parent so the search tree
+  grows breadth-first and never outranks untouched searches. Discovered subreddits queue `reddit.discovered_subreddit_anchors`
+  (default 40 post / 8 comment anchors, compacted) instead of every anchor. `queue_tidy.rebalance_split_priorities`
+  (`wbscraper tidy-queue`) applies the same ranking to a queue built by an older version.

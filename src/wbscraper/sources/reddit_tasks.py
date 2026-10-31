@@ -66,6 +66,13 @@ class RedditHandler:
         self.page_size = int(cfg.get("page_size", 100))
         self.min_window = int(cfg.get("min_window_days", 7)) * 86400
         self.max_depth = int(cfg.get("max_split_depth", 9))
+        # Measured on a real run: Arctic Shift answers "query timed out" for ~2/3 of requests regardless of the window's
+        # width or age (older and newer halves of a split fail equally often, siblings fail independently). Splitting
+        # on the first timeout therefore multiplies the work without helping, so the same window is retried first.
+        self.timeout_retries = int(cfg.get("timeout_retries", 2))
+        self.split_decay = int(cfg.get("split_priority_decay", 10))      # deeper windows yield to untouched searches
+        self.discovered_caps = {"posts": int((cfg.get("discovered_subreddit_anchors") or {}).get("posts", 40)),
+                                "comments": int((cfg.get("discovered_subreddit_anchors") or {}).get("comments", 8))}
         self.max_dry = {"pullpush": 2, "arcticshift": 4, "praw": 1, **(cfg.get("max_dry_pages") or {})}
         self.thread_max_pages = int(cfg.get("thread_max_pages", 80))
         self.max_discovered_subs = int(cfg.get("max_discovered_subreddits", 60))
@@ -76,7 +83,7 @@ class RedditHandler:
         raw = self.db.get_meta("discovered_subs")
         self.discovered_subs: list[str] = json.loads(raw) if raw else []
         self.known_subs.update(s.lower() for s in self.discovered_subs)
-        self.anchor_provider: Callable[[int], list[str]] | None = None  # set by planner for discovered subreddits
+        self.anchor_provider: Callable[[str], list[str]] | None = None  # kind -> anchors, set by the planner
 
     # ------------------------------------------------------------------ chain helpers
     def _chain_for(self, task_type: str, p: dict) -> str:
@@ -189,8 +196,8 @@ class RedditHandler:
         self.db.set_meta("discovered_subs", json.dumps(self.discovered_subs))
         if self.anchor_provider is None:
             return
-        for tier_prio, anchor in enumerate(self.anchor_provider(2)):
-            for kind in ("posts", "comments"):
+        for kind in ("posts", "comments"):
+            for anchor in self.anchor_provider(kind)[: self.discovered_caps[kind]]:
                 self.db.add_task("reddit_search", {
                     "kind": kind, "q": anchor, "subreddit": community, "after": self.since, "before": self.until,
                     "dry": 0, "depth": 0}, 520 - (1 if kind == "comments" else 0), "reddit_discovered_sub")
@@ -210,24 +217,42 @@ class RedditHandler:
             nb = page.oldest_ts
         if nb >= int(p["before"]) or nb <= int(p["after"]):
             return
-        self.db.add_task(task_type, {**p, "before": nb, "dry": dry}, priority, self._family(task_type, p))
+        self.db.add_task(task_type, {**self._fresh(p), "before": nb, "dry": dry}, priority, self._family(task_type, p))
 
     @staticmethod
     def _family(task_type: str, p: dict) -> str:
         return task_type
 
+    @staticmethod
+    def _fresh(p: dict) -> dict:
+        """A payload for a follow-up task: the timeout-retry counter belongs to one window only."""
+        return {k: v for k, v in p.items() if k != "timeouts"}
+
+    def _on_timeout(self, task_type: str, p: dict, priority: int, split_payload: dict | None = None) -> bool:
+        """A provider answered "query timed out": retry the same window, and only split it once it keeps timing out.
+        Returns True if follow-up work was queued."""
+        tries = int(p.get("timeouts", 0))
+        if tries < self.timeout_retries:
+            self.db.add_task(task_type, {**p, "timeouts": tries + 1}, priority, self._family(task_type, p))
+            log.info("timeout for %s: retrying the same window (%d/%d)", p.get("q") or p.get("prefix") or p.get("post_id"),
+                     tries + 1, self.timeout_retries)
+            return True
+        return self._split(task_type, split_payload or p, priority)
+
     def _split(self, task_type: str, p: dict, priority: int) -> bool:
-        """Halve a time window that timed out. The upper bound is clamped to 'now' so the empty future never
-        keeps a half-window artificially wide."""
+        """Halve a time window that timed out repeatedly. The upper bound is clamped to 'now' so the empty future
+        never keeps a half-window artificially wide. Children run at a slightly lower priority per level so that
+        deepening one search never starves searches that have not run at all (breadth before depth)."""
         after = int(p["after"])
         before = min(int(p["before"]), int(self.clock()) + 86400)
         depth = int(p.get("depth", 0))
         if depth >= self.max_depth or (before - after) <= self.min_window:
             return False
         mid = (after + before) // 2
+        base = self._fresh(p)
         for lo, hi in ((after, mid + 1), (mid - 1, before)):
-            self.db.add_task(task_type, {**p, "after": lo, "before": hi, "depth": depth + 1, "dry": 0}, priority,
-                             self._family(task_type, p))
+            self.db.add_task(task_type, {**base, "after": lo, "before": hi, "depth": depth + 1, "dry": 0},
+                             priority - self.split_decay, self._family(task_type, p))
         log.info("split window for %s into halves (depth %d)", p.get("q") or p.get("prefix"), depth + 1)
         return True
 
@@ -252,7 +277,7 @@ class RedditHandler:
         except FetchError as err:
             if err.kind != "query_timeout":
                 raise
-            if self._split("reddit_search", p, priority):
+            if self._on_timeout("reddit_search", p, priority):
                 return
             provider, page = self._call_chain(chain, method, fn, skip={getattr(err, "provider", "")})
         self._after_page("reddit_search", p, page, provider, method, priority)
@@ -268,7 +293,7 @@ class RedditHandler:
         except FetchError as err:
             if err.kind != "query_timeout":
                 raise
-            if self._split("reddit_urls", p, priority):
+            if self._on_timeout("reddit_urls", p, priority):
                 return
             provider, page = self._call_chain("urls", "posts_by_url", fn, skip={getattr(err, "provider", "")})
         self._after_page("reddit_urls", p, page, provider, "posts_by_url", priority)
@@ -330,8 +355,8 @@ class RedditHandler:
         except FetchError as err:
             if err.kind != "query_timeout":
                 raise
-            if self._split("reddit_thread", {**p, "page": 0}, priority):
-                return                                   # the halves expand the thread; each marks it expanded
+            if self._on_timeout("reddit_thread", p, priority, split_payload={**p, "page": 0}):
+                return                                   # a retry or the halves expand the thread; each marks it expanded
             provider, page = self._call_chain("thread", "thread_comments", fn, skip={getattr(err, "provider", "")})
         outcome = self._ingest(page, provider, "thread_comments", priority=priority)
         more = (not page.final and page.n_raw >= self.page_size and page.oldest_ts is not None
@@ -339,7 +364,7 @@ class RedditHandler:
         if more:
             nb = page.oldest_ts + 1 if page.oldest_ts + 1 < int(p["before"]) else page.oldest_ts
             if int(p["after"]) < nb < int(p["before"]):
-                self.db.add_task("reddit_thread", {**p, "before": nb, "page": page_no + 1}, priority, "reddit_thread")
+                self.db.add_task("reddit_thread", {**self._fresh(p), "before": nb, "page": page_no + 1}, priority, "reddit_thread")
             else:
                 more = False
         if not more:

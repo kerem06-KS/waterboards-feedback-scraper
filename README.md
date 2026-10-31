@@ -69,7 +69,8 @@ wbscraper run
 | `wbscraper report` | Coverage report: which providers worked, failed, were restricted, unique threads per method. |
 | `wbscraper sources` | List the source adapters and whether each is active. |
 | `wbscraper terms` | Preview the generated search queries offline (`--dump plan.tsv` writes them all). |
-| `wbscraper requeue-docs` | Queue second-pass tasks for Water Boards pages that an older version marked done without fetching (page budget). Additive and idempotent; `--dry-run` only counts them. |
+| `wbscraper tidy-queue` | Maintenance for a queue built by an older version: re-ranks window-split Reddit searches breadth-first (so deep windows no longer outrank searches that never ran). `--cancel-stale` also cancels *pending* searches/thread reads that exist only because of items that are no longer relevant (what `rescore` does, without re-scoring). `--dry-run` reports only. Never touches finished tasks or collected data. |
+| `wbscraper requeue-docs` | Queue second-pass tasks for Water Boards pages that an older version marked done without fetching (page budget). Additive and idempotent; `--dry-run` only counts them. `--unclassified` also re-queues PDFs from comment-letter pages that the first crawl could not classify (the link-context hint now classifies them). |
 | `wbscraper rescore` | Re-apply the relevance rules to everything already collected (no network): reclassifies, cancels pending work that only existed because of earlier misclassifications, and regenerates both CSVs. Never deletes collected rows or resets finished tasks. `--keep-pending` also leaves every pending task alone. |
 | `wbscraper check` | One small request per provider to confirm connectivity. |
 | `pytest` | Run the test suite (fully mocked; never touches the network). |
@@ -249,6 +250,13 @@ wbscraper run --enable youtube      # in addition to the default sources
   subreddit comment searches use pre-split 3-year windows and a small anchor budget (`reddit.anchors_per_subreddit`,
   `reddit.comment_window_years` in `config/settings.yaml`); comments inside relevant threads are collected by thread
   expansion regardless, which is fast.
+* **Arctic Shift "query timed out" is random, not a sign of a wide window.** Measured on a real run: about two thirds of
+  scoped searches time out at every window width and age, and sibling windows fail independently. A timed-out window is
+  therefore **retried** (`reddit.timeout_retries`, default 2) before it is split, and each split level runs at a lower
+  priority (`reddit.split_priority_decay`). Splitting on the first timeout (the old behaviour) cost about 50 requests per
+  query/subreddit instead of about 5 and starved the searches that had not run yet. Scoped subreddit search also
+  turned out to add almost nothing that the global PullPush search and thread expansion had not already found, so a
+  newly discovered subreddit gets the same budget as a tier-1 curated one (`reddit.discovered_subreddit_anchors`).
 * Search-engine discovery (`ddgs`) is unofficial and may be throttled; it is deliberately slow.
 * Many recent Water Boards comment letters are released only on request by e-mail, scanned letters need OCR (not
   implemented), and compiled response documents are skipped by design.

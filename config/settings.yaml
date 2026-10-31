@@ -61,6 +61,9 @@ reddit:
     arcticshift: 4
     praw: 1
   thread_max_pages: 80        # safety cap: 80 pages x 100 = 8000 comments per thread
+  timeout_retries: 2          # a window that "timed out" is retried this many times before it is split (see reddit_tasks.py)
+  split_priority_decay: 10    # each split level runs this much lower in priority: breadth before depth
+  discovered_subreddit_anchors: { posts: 40, comments: 8 }   # per newly discovered subreddit (same as a tier-1 curated one)
   max_discovered_subreddits: 60
   discovery_results: 15       # search-engine results requested per query
   lookup_batch: 50            # post ids per lookup request

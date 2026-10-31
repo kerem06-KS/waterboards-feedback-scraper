@@ -32,3 +32,32 @@ def requeue_skipped_pages(db, *, dry_run: bool = False) -> dict:
         db.commit()
     return {"pages_done": len(done), "pages_fetched": fetched, "possibly_skipped": candidates, "requeued": added,
             "dry_run": dry_run}
+
+
+def requeue_unclassified_pdfs(db, *, dry_run: bool = False) -> dict:
+    """Second-pass tasks for PDFs fetched before document outcomes were recorded that never became a letter and whose
+    file name does not mark them as agency documents, found on a comment-letters page. The first crawl could not
+    classify these ("unclassified"); the link-context hint now treats a document on a comment page as a letter unless
+    its own text says it is an agency document. Finished tasks are untouched; idempotent."""
+    from urllib.parse import urlparse
+
+    from .sources.waterboards_docs import skip_by_name
+    in_items = {r[0].split("#")[0] for r in db.conn.execute("SELECT DISTINCT url FROM items WHERE source='waterboards'")}
+    seen = {r["url"]: (r["status"], r["query"] or "") for r in db.conn.execute(
+        "SELECT url, status, query FROM urls_seen WHERE url LIKE '%.pdf'")}
+    done = db.conn.execute("SELECT payload, priority FROM tasks WHERE type='wb_pdf' AND status='done'").fetchall()
+    candidates = added = 0
+    for row in done:
+        payload = json.loads(row["payload"])
+        url = payload["url"]
+        status, parent = seen.get(url, ("", ""))
+        if status != "new" or url in in_items or payload.get("pass") or skip_by_name(urlparse(url).path):
+            continue
+        if "comment" not in urlparse(parent).path.lower():
+            continue
+        candidates += 1
+        if not dry_run and db.add_task("wb_pdf", {"url": url, "ctx": "letter", "pass": 2}, row["priority"], "waterboards_docs"):
+            added += 1
+    if not dry_run:
+        db.commit()
+    return {"candidates": candidates, "requeued": added, "dry_run": dry_run}

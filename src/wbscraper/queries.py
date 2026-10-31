@@ -154,9 +154,14 @@ def known_subreddits(lib: TermLibrary) -> set[str]:
 
 
 def discovered_sub_anchors(lib: TermLibrary):
-    """Anchor list used for subreddits found at runtime (tier-1 and tier-2 anchors)."""
-    texts = [a.text for a in anchors(lib, max_tier=2)]
-    return lambda _tier: texts
+    """Anchors for subreddits found at runtime: the most important ones, compacted like a curated subreddit's.
+
+    Returns a function kind ("posts" | "comments") -> ordered anchor texts; the handler applies the per-kind budget
+    (`reddit.discovered_subreddit_anchors`, the same as a tier-1 curated subreddit). Before this, every tier-1/2 anchor
+    (about 270, twice) was queued per discovered subreddit, roughly 13 times a curated subreddit's budget.
+    """
+    texts = [a.text for a in compact(lib, anchors(lib, max_tier=3))]
+    return lambda _kind: texts
 
 
 def plan_reddit_tasks(lib: TermLibrary, settings, *, since: int | None = None, enabled: dict[str, bool] | None = None

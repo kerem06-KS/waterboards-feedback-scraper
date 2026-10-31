@@ -18,8 +18,9 @@ from .config import Settings, deep_merge, load_dotenv, load_settings
 from .export import export_csv, export_review_csv, write_manifest
 from .progress import Dashboard, print_summary
 from .report import build_report
-from .docs_recovery import requeue_skipped_pages
-from .rescore import queue_thread_followups, rescore_all
+from .docs_recovery import requeue_skipped_pages, requeue_unclassified_pdfs
+from .queue_tidy import rebalance_split_priorities
+from .rescore import prune_stale_work, queue_thread_followups, rescore_all
 from .runner import Runner
 
 console = Console()
@@ -193,6 +194,22 @@ def cmd_requeue_docs(args) -> int:
     app = build_app(settings)
     try:
         console.print(requeue_skipped_pages(app.db, dry_run=args.dry_run))
+        if args.unclassified:
+            console.print({"unclassified PDFs": requeue_unclassified_pdfs(app.db, dry_run=args.dry_run)})
+    finally:
+        app.close()
+    return 0
+
+
+def cmd_tidy_queue(args) -> int:
+    settings = _settings(args)
+    app = build_app(settings)
+    try:
+        decay = int(settings.get("reddit.split_priority_decay", 10))
+        console.print({"split-window priorities": rebalance_split_priorities(app.db, decay, dry_run=args.dry_run)})
+        if args.cancel_stale:
+            retired = list((app.lib.relevance or {}).get("retired_queries") or [])
+            console.print({"stale pending work": prune_stale_work(app.db, retired, dry_run=args.dry_run)})
     finally:
         app.close()
     return 0
@@ -338,7 +355,17 @@ def build_parser() -> argparse.ArgumentParser:
     rq = sub.add_parser("requeue-docs", parents=[common],
                         help="queue second-pass tasks for Water Boards pages an older version skipped without fetching")
     rq.add_argument("--dry-run", action="store_true", help="only report how many pages would be queued")
+    rq.add_argument("--unclassified", action="store_true",
+                    help="also re-queue PDFs from comment-letter pages that the first crawl could not classify")
     rq.set_defaults(func=cmd_requeue_docs)
+    tq = sub.add_parser("tidy-queue", parents=[common],
+                        help="re-rank window-split searches breadth-first; optionally cancel pending work tied to items "
+                             "that are no longer relevant")
+    tq.add_argument("--dry-run", action="store_true", help="only report what would change")
+    tq.add_argument("--cancel-stale", action="store_true",
+                    help="also cancel PENDING searches/thread reads that exist only because of items that are no longer relevant "
+                         "(the same clean-up `rescore` performs, without re-scoring anything)")
+    tq.set_defaults(func=cmd_tidy_queue)
     sub.add_parser("sources", parents=[common], help="list source adapters").set_defaults(func=cmd_sources)
     t = sub.add_parser("terms", parents=[common], help="preview the generated search queries (offline)")
     t.add_argument("--sample", type=int, default=8, help="queries to show per family")

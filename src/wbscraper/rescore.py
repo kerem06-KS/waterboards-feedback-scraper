@@ -104,7 +104,7 @@ def rescore_all(db, scorer: RelevanceScorer, *, prune: bool = True, retired_quer
     return out
 
 
-def prune_stale_work(db, retired_queries: list[str]) -> dict[str, int]:
+def prune_stale_work(db, retired_queries: list[str], *, dry_run: bool = False) -> dict[str, int]:
     """Cancel *pending* tasks that only exist because of items that are no longer relevant, and forget
     auto-discovered subreddits that never produced a relevant item. Completed work is untouched."""
     conn = db.conn
@@ -116,7 +116,7 @@ def prune_stale_work(db, retired_queries: list[str]) -> dict[str, int]:
     discovered = json.loads(raw) if raw else []
     keep = [s for s in discovered if s.lower() in good_subs]
     dropped = {s.lower() for s in discovered} - {s.lower() for s in keep}
-    if dropped:
+    if dropped and not dry_run:
         db.set_meta("discovered_subs", json.dumps(keep))
 
     pending = conn.execute("SELECT id, type, payload FROM tasks WHERE status='pending'").fetchall()
@@ -139,10 +139,12 @@ def prune_stale_work(db, retired_queries: list[str]) -> dict[str, int]:
             if tuids and all(u not in relevant_threads and u not in search_discovered for u in tuids):
                 cancel.append((t["id"], "post_lookups"))
     for tid, kind in cancel:
-        conn.execute("UPDATE tasks SET status='cancelled', last_error='cancelled by rescore: item no longer relevant',"
-                     " updated_at=? WHERE id=? AND status='pending'", (db.clock(), tid))
+        if not dry_run:
+            conn.execute("UPDATE tasks SET status='cancelled', last_error='cancelled by rescore: item no longer relevant',"
+                         " updated_at=? WHERE id=? AND status='pending'", (db.clock(), tid))
         cancelled[kind] += 1
-    db.commit()
+    if not dry_run:
+        db.commit()
     cancelled["subreddits_forgotten"] = len(dropped)
     return cancelled
 
